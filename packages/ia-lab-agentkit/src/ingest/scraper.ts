@@ -291,11 +291,11 @@ function extractRequirements($: cheerio.CheerioAPI): Requirement[] {
   });
 }
 
-function htmlToMarkdown(html: string, $: cheerio.CheerioAPI): string {
+function htmlToMarkdown(html: string, _$: cheerio.CheerioAPI): string {
   const content = cheerio.load(html);
   const lines: string[] = [];
 
-  function processNode(node: cheerio.Element, depth = 0): void {
+  function processNode(node: Parameters<Parameters<typeof content>[0]>[0], depth = 0): void {
     const tagName = node.tagName?.toLowerCase();
 
     if (!tagName) {
@@ -379,19 +379,19 @@ function htmlToMarkdown(html: string, $: cheerio.CheerioAPI): string {
       case 'section':
       case 'article':
         content(node).children().each((_, child) => {
-          processNode(child as cheerio.Element, depth);
+          processNode(child, depth);
         });
         break;
       default:
         // Process children
         content(node).children().each((_, child) => {
-          processNode(child as cheerio.Element, depth);
+          processNode(child, depth);
         });
     }
   }
 
   content('body').children().each((_, node) => {
-    processNode(node as cheerio.Element);
+    processNode(node);
   });
 
   return lines

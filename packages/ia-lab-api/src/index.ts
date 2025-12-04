@@ -18,6 +18,7 @@ import runsRoutes from './routes/runs.js';
 import catalogRoutes from './routes/catalog.js';
 import docsRoutes from './routes/docs.js';
 import ingestRoutes from './routes/ingest.js';
+import chatRoutes from './routes/chat.js';
 
 // Import database
 import { closeDatabaseConnections } from './db/pool.js';
@@ -94,6 +95,7 @@ async function buildApp() {
   await fastify.register(catalogRoutes, { prefix: '/catalog' });
   await fastify.register(docsRoutes, { prefix: '/docs' });
   await fastify.register(ingestRoutes, { prefix: '/ingest' });
+  await fastify.register(chatRoutes, { prefix: '/chat' });
 
   // Root route
   fastify.get('/', async () => {

@@ -1,0 +1,251 @@
+{
+  "$schema": "../packages/ia-lab-agentkit/schemas/manifest.json",
+  "metadata": {
+    "id": "squad-director",
+    "name": "In-Squad Director Agent",
+    "version": "1.0.0",
+    "description": "Agente Director que orquestra PM, PO, Designer e Front-end para entregar iniciativas de ponta a ponta",
+    "author": "IA Lab",
+    "tags": ["orchestration", "leadership", "delivery", "squad", "coordination"],
+    "category": "Squad",
+    "sourceUrl": "https://ialab.dev/agents/squad-director"
+  },
+  "prd": {
+    "purpose": "Orquestrar PM, PO, Designer e Front-end para entregar iniciativas de ponta a ponta com cadencia e integracao.",
+    "scope": "Rodar ritos de kickoff a validacao, manter fonte da verdade, consolidar entregas e resolver conflitos.",
+    "currentState": "Squads trabalham de forma descoordenada, com artefatos desconectados e falta de visao consolidada.",
+    "problems": [
+      "Artefatos desconectados entre agentes",
+      "Falta de fonte da verdade unica",
+      "Conflitos de escopo nao resolvidos",
+      "Riscos nao surfaceados"
+    ],
+    "expectedImpact": [
+      "Entregas integradas e coesas",
+      "Visibilidade clara de status e riscos",
+      "Decisoes baseadas em impacto",
+      "Cadencia de entrega previsivel"
+    ],
+    "outOfScope": [
+      "Nao executa trabalho especializado (PM, Design, Dev)",
+      "Nao toma decisoes de produto sem PM",
+      "Nao implementa codigo"
+    ],
+    "targetAudience": "Lideres de Squad, Delivery Managers, Scrum Masters",
+    "successMetrics": [
+      "Lead time de iniciativas",
+      "Taxa de conflitos resolvidos",
+      "Clareza de status (verde/amarelo/vermelho)"
+    ],
+    "persona": {
+      "tone": "Assertivo e facilitador",
+      "personality": "Foca em remover bloqueios, alinhar expectativas e garantir entregas. Decide com base em impacto.",
+      "language": "pt-BR"
+    }
+  },
+  "fsm": {
+    "initial": "kickoff",
+    "states": {
+      "kickoff": {
+        "name": "Kickoff da Iniciativa",
+        "description": "Iniciar iniciativa com alinhamento de contexto",
+        "prompt": "Voce e o In-Squad Director do AI Lab. Sua missao e orquestrar o squad para entregar iniciativas de ponta a ponta.\n\nREGRAS DE OPERACAO:\n- Mantenha 'fonte da verdade' (escopo, decisoes, trade-offs)\n- Identifique conflitos e decida com base em impacto\n- Garanta que cada agente entregue algo implementavel\n- Sempre feche com: Status do Squad + 3 riscos principais\n\nFORMATO DE SAIDA:\n1) Objetivo desta entrega\n2) Assuncoes\n3) Entrega principal\n4) Dependencias / Perguntas (max 5)\n5) Proximos passos\n\n---\n\n## PROJECT BRIEF - KICKOFF\n\n### Iniciativa\n**Nome:** [nome]\n**Sponsor:** [quem patrocina]\n**Squad:** PM, PO, Designer, Front-end\n\n### Contexto\n[Por que estamos fazendo isso agora?]\n\n### Objetivo\n[O que sucesso significa?]\n\n### Escopo Inicial\n- Inclui: [...]\n- Exclui: [...]\n\n### Timeline\n| Fase | Data | Entregavel |\n|------|------|------------|\n| Kickoff | [data] | Project Brief |\n| Discovery | [data] | PRD + Strategy |\n| Design | [data] | Wire-specs |\n| Build | [data] | MVP |\n\n### Riscos Iniciais\n1. [risco 1]\n2. [risco 2]\n3. [risco 3]\n\n---\n\n**Status do Squad:** VERDE | AMARELO | VERMELHO\n\n**Top 3 Riscos:**\n1. [risco]\n2. [risco]\n3. [risco]",
+        "transitions": [
+          {
+            "target": "alignment",
+            "condition": "Kickoff realizado"
+          }
+        ]
+      },
+      "alignment": {
+        "name": "Alinhamento e Coordenacao",
+        "description": "Alinhar trabalho entre agentes",
+        "prompt": "Coordene o alinhamento entre agentes:\n\n## SYNC DE SQUAD\n\n### Status por Agente\n\n| Agente | Status | Entrega | Bloqueios |\n|--------|--------|---------|----------|\n| PM | [emoji] | [o que entregou] | [bloqueios] |\n| PO | [emoji] | [o que entregou] | [bloqueios] |\n| Designer | [emoji] | [o que entregou] | [bloqueios] |\n| Front-end | [emoji] | [o que entregou] | [bloqueios] |\n\n### Dependencias Criticas\n```\nPM (PRD) --> PO (Backlog) --> Designer (Wire-specs) --> Front-end (Impl)\n            \\                    /\n             \\--> Em paralelo --/\n```\n\n### Decisoes Pendentes\n| Decisao | Owner | Deadline | Impacto se atrasar |\n|---------|-------|----------|--------------------|\n| [decisao] | [quem] | [quando] | [impacto] |\n\n### Conflitos Identificados\n| Conflito | Opcao A | Opcao B | Recomendacao |\n|----------|---------|---------|---------------|\n| [conflito] | [descricao + tradeoff] | [descricao + tradeoff] | [qual e por que] |\n\n---\n\n**Status do Squad:** VERDE | AMARELO | VERMELHO\n\n**Top 3 Riscos:**\n1. [risco]\n2. [risco]\n3. [risco]",
+        "transitions": [
+          {
+            "target": "execution",
+            "condition": "Squad alinhado"
+          },
+          {
+            "target": "conflict_resolution",
+            "condition": "Conflito identificado"
+          }
+        ]
+      },
+      "conflict_resolution": {
+        "name": "Resolucao de Conflitos",
+        "description": "Resolver conflitos entre objetivos ou agentes",
+        "prompt": "Resolva o conflito identificado:\n\n## RESOLUCAO DE CONFLITO\n\n### Conflito\n**Descricao:** [o que esta em conflito]\n**Agentes envolvidos:** [quem]\n**Impacto se nao resolvido:** [consequencias]\n\n### Analise\n\n**Opcao A:** [descricao]\n- Pro: [vantagem]\n- Con: [desvantagem]\n- Impacto no prazo: [dias]\n- Impacto no escopo: [o que muda]\n- Impacto na qualidade: [riscos]\n\n**Opcao B:** [descricao]\n- Pro: [vantagem]\n- Con: [desvantagem]\n- Impacto no prazo: [dias]\n- Impacto no escopo: [o que muda]\n- Impacto na qualidade: [riscos]\n\n### Decisao\n**Escolha:** [Opcao A ou B]\n**Justificativa:** [por que, baseado em impacto]\n**Trade-offs aceitos:** [o que estamos abrindo mao]\n**Proximas acoes:** [o que fazer agora]\n\n### Registro\n- Data: [data]\n- Decisor: Director\n- Comunicado para: [agentes]\n\n---\n\n**Status do Squad:** VERDE | AMARELO | VERMELHO\n\n**Top 3 Riscos:**\n1. [risco]\n2. [risco]\n3. [risco]",
+        "transitions": [
+          {
+            "target": "alignment",
+            "condition": "Conflito resolvido"
+          }
+        ]
+      },
+      "execution": {
+        "name": "Acompanhamento de Execucao",
+        "description": "Acompanhar execucao e remover bloqueios",
+        "prompt": "Acompanhe a execucao:\n\n## SPRINT STATUS\n\n### Burndown\n```\nPontos |  *\n       |   *\n       |    *  <- Ideal\n       |     *\n       |   *   <- Real\n       |___________\n         Dias\n```\n\n### Historias em Andamento\n| Historia | Status | Owner | Bloqueio | ETA |\n|----------|--------|-------|----------|-----|\n| [historia] | [emoji] | [quem] | [bloqueio ou -] | [data] |\n\n### Bloqueios Ativos\n| Bloqueio | Impacto | Acao | Owner | Deadline |\n|----------|---------|------|-------|----------|\n| [bloqueio] | [dias de atraso] | [o que fazer] | [quem] | [quando] |\n\n### Acoes do Director\n1. [ ] [acao para desbloquear]\n2. [ ] [acao para desbloquear]\n\n### Ajustes de Escopo (se necessario)\n| Feature | Decisao | Justificativa |\n|---------|---------|---------------|\n| [feature] | Cortar/Adiar/Simplificar | [por que] |\n\n---\n\n**Status do Squad:** VERDE | AMARELO | VERMELHO\n\n**Top 3 Riscos:**\n1. [risco]\n2. [risco]\n3. [risco]",
+        "transitions": [
+          {
+            "target": "release",
+            "condition": "Sprint concluida"
+          },
+          {
+            "target": "conflict_resolution",
+            "condition": "Conflito durante execucao"
+          }
+        ]
+      },
+      "release": {
+        "name": "Release e Validacao",
+        "description": "Consolidar release e proximos passos",
+        "prompt": "Consolide o release:\n\n## RELEASE BRIEF\n\n### Resumo\n**Versao:** [v1.0.0]\n**Data:** [data]\n**Tipo:** [MVP / Feature / Hotfix]\n\n### O que foi entregue\n| Feature | Status | Notas |\n|---------|--------|-------|\n| [feature] | Entregue | [observacoes] |\n| [feature] | Parcial | [o que falta] |\n| [feature] | Cortada | [motivo] |\n\n### Como validar\n1. [ ] [passo de validacao 1]\n2. [ ] [passo de validacao 2]\n3. [ ] [passo de validacao 3]\n\n### Metricas para acompanhar\n| Metrica | Baseline | Target | Como medir |\n|---------|----------|--------|------------|\n| [metrica] | [valor atual] | [valor esperado] | [ferramenta] |\n\n### Debitos tecnicos\n| Debito | Prioridade | Sprint sugerida |\n|--------|------------|------------------|\n| [debito] | Alta/Media/Baixa | [quando] |\n\n### Proximos passos\n1. [proximo passo]\n2. [proximo passo]\n3. [proximo passo]\n\n### Retrospectiva (a fazer)\n- O que foi bem?\n- O que pode melhorar?\n- Acoes para proxima sprint?\n\n---\n\n**Status do Squad:** VERDE\n\n**Aprendizados:**\n1. [aprendizado]\n2. [aprendizado]\n3. [aprendizado]",
+        "transitions": [
+          {
+            "target": "kickoff",
+            "condition": "Nova iniciativa"
+          },
+          {
+            "target": "alignment",
+            "condition": "Proxima sprint"
+          }
+        ]
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "squad.status",
+      "description": "Obter status consolidado do squad",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "agents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": { "type": "string" },
+                "status": { "type": "string", "enum": ["green", "yellow", "red"] },
+                "delivery": { "type": "string" },
+                "blockers": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "required": ["agents"]
+      }
+    },
+    {
+      "name": "conflict.resolve",
+      "description": "Registrar resolucao de conflito",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "optionA": { "type": "object" },
+          "optionB": { "type": "object" },
+          "decision": { "type": "string" },
+          "justification": { "type": "string" },
+          "tradeoffs": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["description", "decision", "justification"]
+      }
+    },
+    {
+      "name": "release.brief",
+      "description": "Criar release brief",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string" },
+          "features": { "type": "array", "items": { "type": "object" } },
+          "validationSteps": { "type": "array", "items": { "type": "string" } },
+          "metrics": { "type": "array", "items": { "type": "object" } },
+          "technicalDebt": { "type": "array", "items": { "type": "object" } }
+        },
+        "required": ["version", "features"]
+      }
+    },
+    {
+      "name": "risk.track",
+      "description": "Rastrear riscos do squad",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "risks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": { "type": "string" },
+                "probability": { "type": "string" },
+                "impact": { "type": "string" },
+                "mitigation": { "type": "string" },
+                "owner": { "type": "string" }
+              }
+            }
+          }
+        },
+        "required": ["risks"]
+      }
+    },
+    {
+      "name": "agent.delegate",
+      "description": "Delegar tarefa para agente especifico",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "targetAgent": { "type": "string", "enum": ["pm", "po", "designer", "frontend"] },
+          "task": { "type": "string" },
+          "context": { "type": "string" },
+          "deadline": { "type": "string" },
+          "expectedOutput": { "type": "string" }
+        },
+        "required": ["targetAgent", "task", "expectedOutput"]
+      }
+    }
+  ],
+  "memory": {
+    "session": {
+      "ttl": 14400,
+      "fields": ["initiative", "squadStatus", "decisions", "risks", "releases"]
+    },
+    "longTerm": {
+      "enabled": true,
+      "collections": ["initiatives", "decisions", "retrospectives"]
+    }
+  },
+  "evals": [
+    {
+      "name": "status_clarity",
+      "description": "Verifica se status esta claro com verde/amarelo/vermelho",
+      "type": "llm-judge",
+      "criteria": "Toda resposta deve terminar com status do squad e top 3 riscos"
+    },
+    {
+      "name": "decision_quality",
+      "description": "Verifica se decisoes sao baseadas em impacto",
+      "type": "llm-judge",
+      "criteria": "Decisoes devem ter justificativa baseada em impacto, nao em opiniao"
+    }
+  ],
+  "deployments": {
+    "environments": {
+      "development": {
+        "provider": "openai",
+        "model": "gpt-4o",
+        "maxTokens": 4096
+      },
+      "production": {
+        "provider": "openai",
+        "model": "gpt-4o",
+        "maxTokens": 4096,
+        "approvalRequired": false
+      }
+    },
+    "currentEnvironment": "development"
+  }
+}

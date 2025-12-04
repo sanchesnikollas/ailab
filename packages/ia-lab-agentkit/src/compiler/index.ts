@@ -37,14 +37,13 @@ export function compilePrompt(
   const systemPrompt = buildSystemPrompt(manifest, state, options);
   const allowedTools = getAllowedTools(manifest, state);
   const tools = getToolDefinitions(manifest, allowedTools);
-  const retrievalHints = options.retrieval_hints || [];
 
   return {
     system: systemPrompt,
     tools,
     tool_choice_policy: determineToolChoicePolicy(state, allowedTools),
     allowed_tool_names: allowedTools,
-    retrieval_hints,
+    retrieval_hints: options.retrieval_hints || [],
   };
 }
 

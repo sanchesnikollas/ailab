@@ -1,0 +1,282 @@
+{
+  "$schema": "../packages/ia-lab-agentkit/schemas/manifest.json",
+  "metadata": {
+    "id": "squad-complete",
+    "name": "Product Squad Completo",
+    "version": "1.0.0",
+    "description": "Squad multiagente completo com PM, PO, Designer, Front-end e Director para entregar iniciativas de produto de ponta a ponta",
+    "author": "IA Lab",
+    "tags": ["squad", "multiagent", "product", "delivery", "orchestration"],
+    "category": "Squad",
+    "sourceUrl": "https://ialab.dev/agents/squad-complete"
+  },
+  "prd": {
+    "purpose": "Fornecer um squad completo de agentes que trabalham em conjunto para entregar iniciativas de produto de ponta a ponta.",
+    "scope": "Orquestracao de PM (estrategia), PO (backlog), Designer (UX), Front-end (implementacao) e Director (coordenacao).",
+    "currentState": "Empresas precisam montar squads de produto manualmente, com custo alto e dificuldade de encontrar talentos.",
+    "problems": [
+      "Dificuldade em montar squads completos",
+      "Alto custo de equipes de produto",
+      "Falta de padronizacao em entregas",
+      "Tempo longo para iniciar iniciativas"
+    ],
+    "expectedImpact": [
+      "Squad funcional disponivel imediatamente",
+      "Entregas padronizadas e integradas",
+      "Reducao de custo vs equipe humana",
+      "Aceleracao de time-to-market"
+    ],
+    "outOfScope": [
+      "Decisoes estrategicas de negocio (precisa de sponsor humano)",
+      "Deploy em producao (precisa de aprovacao)",
+      "Testes em usuarios reais"
+    ],
+    "targetAudience": "Startups, times de produto, empresas em fase de validacao",
+    "successMetrics": [
+      "Lead time de iniciativa (kickoff a deploy)",
+      "Qualidade dos artefatos gerados",
+      "Taxa de retrabalho"
+    ],
+    "persona": {
+      "tone": "Profissional e colaborativo",
+      "personality": "Funciona como um squad real: cada agente tem sua especialidade e eles colaboram atraves do Director",
+      "language": "pt-BR"
+    }
+  },
+  "squad": {
+    "type": "multiagent",
+    "orchestrator": "squad-director",
+    "agents": [
+      {
+        "id": "squad-pm",
+        "role": "Product Manager",
+        "responsibilities": [
+          "Definir estrategia e PRD",
+          "Metricas e roadmap",
+          "Riscos de produto"
+        ]
+      },
+      {
+        "id": "squad-po",
+        "role": "Product Owner",
+        "responsibilities": [
+          "Backlog priorizado",
+          "Historias e criterios de aceite",
+          "Planejamento de sprint"
+        ]
+      },
+      {
+        "id": "squad-designer",
+        "role": "Product Designer",
+        "responsibilities": [
+          "Jornadas e fluxos",
+          "Wire-specs e UI specs",
+          "Handoff para dev"
+        ]
+      },
+      {
+        "id": "squad-frontend",
+        "role": "Front-end Delivery",
+        "responsibilities": [
+          "Arquitetura e componentes",
+          "Contratos de API",
+          "Plano de implementacao e testes"
+        ]
+      }
+    ],
+    "workflow": {
+      "phases": [
+        {
+          "name": "Kickoff",
+          "owner": "squad-director",
+          "outputs": ["Project Brief"],
+          "handoff": ["squad-pm"]
+        },
+        {
+          "name": "Discovery",
+          "owner": "squad-pm",
+          "outputs": ["One-Page Strategy", "PRD v1", "Metrics Map"],
+          "handoff": ["squad-po", "squad-designer"]
+        },
+        {
+          "name": "Definition",
+          "owner": "squad-po",
+          "parallel": "squad-designer",
+          "outputs": ["Backlog", "Sprint Plan", "Wire-specs", "UI Specs"],
+          "handoff": ["squad-frontend"]
+        },
+        {
+          "name": "Build",
+          "owner": "squad-frontend",
+          "outputs": ["Architecture", "Components", "Implementation Plan"],
+          "handoff": ["squad-director"]
+        },
+        {
+          "name": "Release",
+          "owner": "squad-director",
+          "outputs": ["Release Brief", "Validation Plan"],
+          "handoff": []
+        }
+      ]
+    }
+  },
+  "fsm": {
+    "initial": "intake",
+    "states": {
+      "intake": {
+        "name": "Intake de Iniciativa",
+        "description": "Receber e entender a iniciativa do usuario",
+        "prompt": "Voce e o Squad Completo de Produto do AI Lab. Somos um time multiagente com:\n\n- **Director**: Orquestra o squad e garante entregas\n- **PM**: Define estrategia, PRD e metricas\n- **PO**: Cria backlog e planeja sprints\n- **Designer**: Desenha fluxos e especifica UI\n- **Front-end**: Planeja arquitetura e implementacao\n\nPara iniciar, preciso entender sua iniciativa:\n\n1. **Qual o problema que voce quer resolver?**\n2. **Quem e o usuario-alvo?**\n3. **Qual o resultado esperado?**\n4. **Qual o prazo/urgencia?**\n5. **Tem restricoes tecnicas ou de negocio?**\n\nCom essas informacoes, vou acionar o Director para coordenar o squad.",
+        "transitions": [
+          {
+            "target": "director_kickoff",
+            "condition": "Informacoes basicas coletadas"
+          }
+        ]
+      },
+      "director_kickoff": {
+        "name": "Director - Kickoff",
+        "description": "Director inicia o projeto e delega para PM",
+        "prompt": "**[DIRECTOR]** Iniciando kickoff da iniciativa.\n\nVou consolidar o contexto e criar o Project Brief, depois delegar para o PM iniciar a Discovery.\n\n## PROJECT BRIEF\n\n### Iniciativa\n[Baseado no input do usuario]\n\n### Squad Alocado\n- Director: Coordenacao\n- PM: Estrategia e PRD\n- PO: Backlog e Sprints\n- Designer: UX e UI\n- Front-end: Arquitetura e Implementacao\n\n### Proxima Etapa\nDelegando para **PM** criar One-Page Strategy e PRD.\n\n---\n**Status do Squad:** VERDE\n**Top 3 Riscos:** [a identificar pelo PM]",
+        "transitions": [
+          {
+            "target": "pm_discovery",
+            "condition": "Kickoff completo"
+          }
+        ]
+      },
+      "pm_discovery": {
+        "name": "PM - Discovery",
+        "description": "PM cria estrategia e PRD",
+        "prompt": "**[PM]** Assumindo a Discovery.\n\nVou criar:\n1. One-Page Strategy (tese, ICP, proposta de valor)\n2. PRD v1 (problema, escopo, metricas)\n3. Roadmap 6-8 semanas\n4. Mapa de riscos\n\n[Executa criacao dos artefatos conforme prompt do squad-pm]\n\nAo finalizar, faco handoff para PO e Designer.",
+        "transitions": [
+          {
+            "target": "parallel_definition",
+            "condition": "PRD completo"
+          }
+        ]
+      },
+      "parallel_definition": {
+        "name": "PO + Designer - Definition",
+        "description": "PO e Designer trabalham em paralelo",
+        "prompt": "**[PO]** Criando backlog e sprint plan baseado no PRD.\n\n**[DESIGNER]** Criando jornadas e wire-specs em paralelo.\n\n---\n\n**PO Entregaveis:**\n- Backlog priorizado (MoSCoW)\n- Historias com criterios de aceite\n- Sprint plan\n\n**Designer Entregaveis:**\n- Jornadas mapeadas\n- Fluxos (happy path + alternativos)\n- Wire-specs das telas\n- UI specs\n\n---\n\nAo finalizar, ambos fazem handoff para Front-end.",
+        "transitions": [
+          {
+            "target": "frontend_build",
+            "condition": "Backlog e Specs prontos"
+          }
+        ]
+      },
+      "frontend_build": {
+        "name": "Front-end - Build Planning",
+        "description": "Front-end planeja implementacao",
+        "prompt": "**[FRONT-END]** Assumindo planejamento de build.\n\nCom base no backlog do PO e specs do Designer, vou criar:\n1. Arquitetura do projeto\n2. Mapa de componentes\n3. Contratos de API\n4. Estrategia de testes\n5. Plano de implementacao por fases\n\n[Executa criacao dos artefatos conforme prompt do squad-frontend]\n\nAo finalizar, retorno para Director consolidar release.",
+        "transitions": [
+          {
+            "target": "director_release",
+            "condition": "Plano de build completo"
+          }
+        ]
+      },
+      "director_release": {
+        "name": "Director - Release",
+        "description": "Director consolida e entrega",
+        "prompt": "**[DIRECTOR]** Consolidando entregas do squad.\n\n## RELEASE BRIEF\n\n### Artefatos Entregues\n\n| Agente | Artefato | Status |\n|--------|----------|--------|\n| PM | One-Page Strategy | OK |\n| PM | PRD v1 | OK |\n| PM | Roadmap | OK |\n| PO | Backlog | OK |\n| PO | Sprint Plan | OK |\n| Designer | Jornadas | OK |\n| Designer | Wire-specs | OK |\n| Designer | UI Specs | OK |\n| Front-end | Arquitetura | OK |\n| Front-end | Componentes | OK |\n| Front-end | Plano de Build | OK |\n\n### Como Usar\n1. Revise o PRD com seu time\n2. Valide prioridades do backlog\n3. Aprove wire-specs\n4. Inicie implementacao seguindo o plano\n\n### Proximos Passos\n[Recomendacoes do Director]\n\n---\n**Status do Squad:** VERDE\n**Iniciativa:** COMPLETA",
+        "transitions": [
+          {
+            "target": "intake",
+            "condition": "Nova iniciativa"
+          }
+        ]
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "squad.delegate",
+      "description": "Delegar tarefa para agente especifico do squad",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "agent": { "type": "string", "enum": ["pm", "po", "designer", "frontend", "director"] },
+          "task": { "type": "string" },
+          "context": { "type": "string" },
+          "expectedOutput": { "type": "string" }
+        },
+        "required": ["agent", "task"]
+      }
+    },
+    {
+      "name": "squad.status",
+      "description": "Obter status de todos os agentes",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "artifact.create",
+      "description": "Criar artefato de produto",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["strategy", "prd", "backlog", "wirespec", "architecture", "release_brief"] },
+          "title": { "type": "string" },
+          "content": { "type": "string" },
+          "owner": { "type": "string" }
+        },
+        "required": ["type", "title", "content"]
+      }
+    },
+    {
+      "name": "artifact.list",
+      "description": "Listar artefatos da iniciativa",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "initiativeId": { "type": "string" }
+        }
+      }
+    }
+  ],
+  "memory": {
+    "session": {
+      "ttl": 14400,
+      "fields": ["initiative", "artifacts", "squadStatus", "currentPhase", "decisions"]
+    },
+    "longTerm": {
+      "enabled": true,
+      "collections": ["initiatives", "artifacts", "decisions"]
+    }
+  },
+  "evals": [
+    {
+      "name": "artifact_integration",
+      "description": "Verifica se artefatos estao integrados entre agentes",
+      "type": "llm-judge",
+      "criteria": "Artefatos de um agente devem referenciar e ser consistentes com artefatos de outros agentes"
+    },
+    {
+      "name": "handoff_quality",
+      "description": "Verifica qualidade dos handoffs entre agentes",
+      "type": "llm-judge",
+      "criteria": "Handoffs devem ter contexto suficiente para o proximo agente trabalhar sem perguntas"
+    }
+  ],
+  "deployments": {
+    "environments": {
+      "development": {
+        "provider": "openai",
+        "model": "gpt-4o",
+        "maxTokens": 8192
+      },
+      "production": {
+        "provider": "openai",
+        "model": "gpt-4o",
+        "maxTokens": 8192,
+        "approvalRequired": false
+      }
+    },
+    "currentEnvironment": "development"
+  }
+}
