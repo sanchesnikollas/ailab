@@ -1,0 +1,44 @@
+{
+  "squad_name": "health-public-squad",
+  "version": "1.0",
+  "description": "Squad de agentes de saúde prontos para uso público (triagem, agendamento, reembolso, auditoria e interoperabilidade).",
+  "agents": [
+    {"slug": "saude-conecta-public", "manifest": "../prototipe-public/indicacao-profissionais-manifest.json", "role": "triagem-e-recomendacao"},
+    {"slug": "agente-agendamento", "manifest": "../prototipe-public/agente-agendamento-manifest.json", "role": "agendamento"},
+    {"slug": "assistente-reembolso", "manifest": "../prototipe-public/assistente-reembolso-manifest.json", "role": "reembolso"},
+    {"slug": "auditoria-faturamento", "manifest": "../prototipe-public/auditoria-faturamento-manifest.json", "role": "auditoria"},
+    {"slug": "codificacao-medica", "manifest": "../prototipe-public/codificacao-medica-manifest.json", "role": "dados-clinicos"},
+    {"slug": "relatorios-medicos", "manifest": "../prototipe-public/relatorios-medicos-manifest.json", "role": "relatorios"},
+    {"slug": "interoperabilidade-hl7fhir", "manifest": "../prototipe-public/interoperabilidade-hl7fhir-manifest.json", "role": "interoperabilidade"}
+  ],
+  "workflow": [
+    {
+      "name": "triagem-e-recomendacao",
+      "entry": "saude-conecta-public",
+      "handoff": ["agente-agendamento", "assistente-reembolso"],
+      "notes": "Usar para triagem inicial e encaminhar para agendamento ou dúvidas de reembolso."
+    },
+    {
+      "name": "agendamento",
+      "entry": "agente-agendamento",
+      "handoff": ["relatorios-medicos"],
+      "notes": "Após marcação, pode enviar dados para geração de relatórios ou follow-up."
+    },
+    {
+      "name": "dados-clinicos",
+      "entry": "codificacao-medica",
+      "handoff": ["interoperabilidade-hl7fhir", "relatorios-medicos"],
+      "notes": "Pipeline de codificação -> interoperabilidade -> relatórios."
+    },
+    {
+      "name": "auditoria-e-reembolso",
+      "entry": "assistente-reembolso",
+      "handoff": ["auditoria-faturamento"],
+      "notes": "Fluxo financeiro pós-atendimento." 
+    }
+  ],
+  "environment": {
+    "secrets": "Configurar variáveis em .env por serviço (DB, Redis, APIs)",
+    "data_sources": "Usar diretório data/ para fixtures de testes e ingest"
+  }
+}

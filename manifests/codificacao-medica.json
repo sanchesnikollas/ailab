@@ -1,0 +1,171 @@
+{
+  "$schema": "../packages/ia-lab-agentkit/schemas/manifest.json",
+  "metadata": {
+    "id": "codificacao-medica",
+    "name": "Extração e Mapeamento de Dados Clínicos",
+    "version": "1.0.0",
+    "description": "Agente de IA para transformar registros clínicos em texto livre em dados compatíveis com HL7/FHIR",
+    "author": "PrototipeAI",
+    "tags": ["healthcare", "hl7", "fhir", "interoperability", "medical-coding"],
+    "category": "Healthcare",
+    "sourceUrl": "https://www.prototipeai.com/posts/agente-de-ia-para-codificacao-medica"
+  },
+  "prd": {
+    "purpose": "Transformar registros clínicos em texto livre ou campos estruturados não padronizados em dados compatíveis com HL7/FHIR, assegurando a interoperabilidade entre sistemas de saúde.",
+    "scope": "Define todos os prompts, configurações de memória, transição entre estados e demais requisitos funcionais para o agente de IA de Extração e Mapeamento de Dados Clínicos.",
+    "currentState": "No cenário atual de saúde, a integração de dados clínicos entre diferentes sistemas é um desafio constante. Registros médicos frequentemente estão em formatos não padronizados, dificultando o compartilhamento e a análise eficiente de informações.",
+    "problems": [
+      "Registros médicos em formatos não padronizados",
+      "Dificuldade no compartilhamento de informações clínicas",
+      "Dificuldade na análise eficiente de informações"
+    ],
+    "expectedImpact": [
+      "Melhoria na interoperabilidade entre sistemas de saúde",
+      "Redução de erros na conversão de dados clínicos",
+      "Aumento da eficiência no processamento de registros clínicos",
+      "Facilitação da análise de dados clínicos para pesquisas"
+    ],
+    "outOfScope": [
+      "Não consulta documentos externos",
+      "Não utiliza calculadora",
+      "Não utiliza busca online"
+    ],
+    "targetAudience": "Sistemas de saúde e profissionais de TI em saúde",
+    "successMetrics": [
+      "Taxa de conversão bem-sucedida para FHIR",
+      "Precisão no mapeamento de terminologias",
+      "Tempo de processamento por registro"
+    ],
+    "persona": {
+      "tone": "Técnico e preciso",
+      "personality": "Focado em conformidade com padrões HL7/FHIR",
+      "language": "pt-BR"
+    }
+  },
+  "fsm": {
+    "initial": "extracao_mapeamento",
+    "states": {
+      "extracao_mapeamento": {
+        "name": "Agente de Extração e Mapeamento de Dados Clínicos",
+        "description": "Extrair informações médicas e mapear para terminologias oficiais",
+        "prompt": "Você é um especialista em codificação médica. Receba o registro clínico em texto livre e extraia: diagnósticos (mapear para CID), procedimentos (mapear para TUSS), medicamentos (mapear para RxNorm), exames laboratoriais (mapear para LOINC), e sintomas (mapear para SNOMED). Gere recursos FHIR validados.",
+        "transitions": [
+          {
+            "target": "extracao_mapeamento",
+            "condition": "Novo registro para processar"
+          }
+        ]
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "terminology.mapToCID",
+      "description": "Mapear diagnósticos para código CID-10",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "diagnosis": { "type": "string" }
+        },
+        "required": ["diagnosis"]
+      }
+    },
+    {
+      "name": "terminology.mapToLOINC",
+      "description": "Mapear exames para código LOINC",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labTest": { "type": "string" }
+        },
+        "required": ["labTest"]
+      }
+    },
+    {
+      "name": "terminology.mapToSNOMED",
+      "description": "Mapear sintomas e condições para SNOMED CT",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "clinicalTerm": { "type": "string" }
+        },
+        "required": ["clinicalTerm"]
+      }
+    },
+    {
+      "name": "terminology.mapToRxNorm",
+      "description": "Mapear medicamentos para RxNorm",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "medication": { "type": "string" }
+        },
+        "required": ["medication"]
+      }
+    },
+    {
+      "name": "fhir.generateResource",
+      "description": "Gerar recurso FHIR validado",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "resourceType": { "type": "string" },
+          "data": { "type": "object" }
+        },
+        "required": ["resourceType", "data"]
+      }
+    },
+    {
+      "name": "fhir.validate",
+      "description": "Validar recurso FHIR contra perfis",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "resource": { "type": "object" },
+          "profile": { "type": "string" }
+        },
+        "required": ["resource"]
+      }
+    }
+  ],
+  "memory": {
+    "session": {
+      "ttl": 3600,
+      "fields": ["sourceRecord", "extractedData", "mappedTerminologies", "fhirResources"]
+    },
+    "longTerm": {
+      "enabled": true,
+      "collections": ["terminology_cache", "conversion_history"]
+    }
+  },
+  "evals": [
+    {
+      "name": "terminology_accuracy",
+      "description": "Verifica precisão do mapeamento de terminologias",
+      "type": "llm-judge",
+      "criteria": "Os mapeamentos para CID, LOINC, SNOMED e RxNorm devem ser precisos e corresponder ao contexto clínico"
+    },
+    {
+      "name": "fhir_compliance",
+      "description": "Verifica conformidade dos recursos FHIR gerados",
+      "type": "llm-judge",
+      "criteria": "Os recursos FHIR gerados devem ser válidos e conformes com os perfis especificados"
+    }
+  ],
+  "deployments": {
+    "environments": {
+      "development": {
+        "provider": "anthropic",
+        "model": "claude-3-haiku-20240307",
+        "maxTokens": 2048
+      },
+      "production": {
+        "provider": "anthropic",
+        "model": "claude-3-sonnet-20240229",
+        "maxTokens": 4096,
+        "approvalRequired": true
+      }
+    },
+    "currentEnvironment": "development"
+  }
+}

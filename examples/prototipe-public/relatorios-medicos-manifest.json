@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ialab.dev/schemas/agent-manifest-v1.json",
+  "manifest_version": "1.0",
+  "metadata": {
+    "id": "00000000-0000-0000-0000-000000000a04",
+    "name": "Agente de IA para Suporte a Relatórios Médicos",
+    "slug": "relatorios-medicos",
+    "domain": "healthcare",
+    "tags": ["healthcare", "clinical-docs", "reporting"],
+    "owner": "public-catalog",
+    "risk_level": "high",
+    "data_classification": "confidential"
+  },
+  "prd": {
+    "purpose": "Organizar justificativas médicas e gerar rascunhos de relatórios a partir de prontuário eletrônico.",
+    "scope": "Fluxo com dois agentes: processamento do prontuário e elaboração do relatório; não consulta sistemas externos.",
+    "context_problem": "Processamento manual de dados clínicos é demorado e propenso a erros.",
+    "expected_impacts": [
+      "Reduzir tempo de elaboração de relatórios",
+      "Aumentar precisão e coerência das justificativas",
+      "Padronizar estrutura de relatórios gerados"
+    ],
+    "solution_overview": "Primeiro agente estrutura dados do prontuário; segundo gera rascunho final para revisão médica.",
+    "requirements": [
+      {"id": "RF1", "title": "Processar prontuário", "description": "Estruturar condição, histórico e plano"},
+      {"id": "RF2", "title": "Gerar rascunho", "description": "Produzir rascunho de relatório com justificativas"}
+    ]
+  },
+  "fsm": {
+    "initial_state": "rf-1-agente-de-processamento-de-prontuario-medico",
+    "fallback_state": "fallback",
+    "states": [
+      {
+        "id": "rf-1-agente-de-processamento-de-prontuario-medico",
+        "name": "RF 1: Agente de Processamento de Prontuário Médico",
+        "description": "Recebe dados clínicos brutos e organiza em categorias lógicas.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Estruture dados em condição atual, histórico e plano de tratamento."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "rf-2-agente-de-elaboracao-de-rascunho-de-relatorio-medico",
+        "name": "RF 2: Agente de Elaboração de Rascunho de Relatório Médico",
+        "description": "Gera rascunho final do relatório para revisão e assinatura.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Use dados estruturados para redigir relatório objetivo e formal."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "fallback",
+        "name": "Fallback",
+        "description": "Reorienta quando a entrada não é clínica ou falta dado essencial.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Peça dados clínicos faltantes e reforce que não há consulta externa."}
+        ],
+        "transitions": []
+      }
+    ]
+  }
+}

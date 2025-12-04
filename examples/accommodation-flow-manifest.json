@@ -1,0 +1,605 @@
+{
+  "$schema": "https://ialab.dev/schemas/agent-manifest-v1.json",
+  "manifest_version": "1.0",
+  "metadata": {
+    "id": "550e8400-e29b-41d4-a716-446655440002",
+    "name": "Accommodation Capacity Flow",
+    "slug": "accommodation-capacity-flow",
+    "domain": "real-estate",
+    "tags": ["real-estate", "multi-agent", "orchestration", "fsm", "hotel", "accommodation"],
+    "owner": "hospitality-team",
+    "risk_level": "medium",
+    "data_classification": "internal"
+  },
+  "prd": {
+    "purpose": "Orquestrar múltiplos agentes especializados para avaliar capacidade de acomodação, disponibilidade e preços em tempo real para plataformas de hospedagem",
+    "scope": "Sistema multi-agente que coordena busca de disponibilidade, análise de capacidade, precificação dinâmica e confirmação de reservas. Não processa pagamentos nem gerencia check-in/check-out.",
+    "context_problem": "Plataformas de hospedagem precisam coordenar múltiplas fontes de dados (inventário, preços, regras de negócio) em tempo real para fornecer cotações precisas e confirmar reservas.",
+    "expected_impacts": [
+      "Redução de overbooking através de verificação de capacidade em tempo real",
+      "Otimização de receita com precificação dinâmica",
+      "Melhoria na experiência do cliente com respostas mais rápidas",
+      "Integração transparente com múltiplos sistemas de gestão hoteleira"
+    ],
+    "solution_overview": "Um agente orquestrador coordena três agentes especializados: InventoryAgent (verifica disponibilidade), PricingAgent (calcula preços) e BookingAgent (confirma reservas). O fluxo é gerenciado por FSM com estados claros de orquestração.",
+    "requirements": [
+      {
+        "id": "RF1",
+        "title": "Recepção de Solicitação",
+        "description": "Receber e validar solicitação de busca com datas, número de hóspedes e preferências",
+        "priority": "must"
+      },
+      {
+        "id": "RF2",
+        "title": "Verificação de Disponibilidade",
+        "description": "Consultar inventário em tempo real através do InventoryAgent",
+        "priority": "must"
+      },
+      {
+        "id": "RF3",
+        "title": "Cálculo de Preços",
+        "description": "Obter precificação dinâmica através do PricingAgent considerando demanda e promoções",
+        "priority": "must"
+      },
+      {
+        "id": "RF4",
+        "title": "Apresentação de Opções",
+        "description": "Compilar e apresentar opções de acomodação ordenadas por relevância",
+        "priority": "must"
+      },
+      {
+        "id": "RF5",
+        "title": "Confirmação de Reserva",
+        "description": "Processar seleção do cliente e confirmar reserva através do BookingAgent",
+        "priority": "must"
+      },
+      {
+        "id": "RF6",
+        "title": "Tratamento de Conflitos",
+        "description": "Gerenciar conflitos de disponibilidade e oferecer alternativas",
+        "priority": "should"
+      }
+    ]
+  },
+  "fsm": {
+    "initial_state": "request_intake",
+    "fallback_state": "error_handling",
+    "global_allowed_tools": ["kb.search", "notes.write", "notes.read"],
+    "states": [
+      {
+        "id": "request_intake",
+        "name": "Recepção de Solicitação (RF1)",
+        "description": "Recebe e valida a solicitação de busca de acomodação",
+        "prompt_blocks": [
+          {
+            "role": "system",
+            "content": "Você é o orquestrador do sistema de busca de acomodações. Receba a solicitação do cliente e extraia: datas de check-in/check-out, número de hóspedes (adultos e crianças), tipo de acomodação preferido, e orçamento se informado.",
+            "priority": 10
+          },
+          {
+            "role": "instructions",
+            "content": "1. Valide que as datas são futuras e check-out > check-in\n2. Verifique que número de hóspedes é válido (1-10)\n3. Normalize preferências para formato padrão\n4. Se dados incompletos, solicite ao cliente",
+            "priority": 5
+          }
+        ],
+        "allowed_tools": ["request.validate", "preferences.normalize"],
+        "memory_writes": [
+          {
+            "path": "session.search_request",
+            "type": "replace"
+          }
+        ],
+        "transitions": [
+          {
+            "when": { "type": "tool_result", "value": "request.validate:success" },
+            "to_state": "inventory_check",
+            "priority": 10
+          },
+          {
+            "when": { "type": "tool_result", "value": "request.validate:invalid" },
+            "to_state": "request_intake",
+            "priority": 5
+          }
+        ],
+        "is_terminal": false,
+        "max_iterations": 5
+      },
+      {
+        "id": "inventory_check",
+        "name": "Verificação de Disponibilidade (RF2)",
+        "description": "Delega verificação ao InventoryAgent",
+        "prompt_blocks": [
+          {
+            "role": "system",
+            "content": "Delegue a verificação de disponibilidade ao InventoryAgent. Este agente especializado consultará todos os sistemas de inventário conectados e retornará uma lista de acomodações disponíveis.",
+            "priority": 10
+          },
+          {
+            "role": "instructions",
+            "content": "1. Envie a solicitação normalizada ao InventoryAgent\n2. Aguarde resposta com lista de disponibilidades\n3. Se nenhuma disponibilidade, transite para alternativas\n4. Se disponível, prossiga para precificação",
+            "priority": 5
+          }
+        ],
+        "allowed_tools": ["agent.inventory.search"],
+        "memory_writes": [
+          {
+            "path": "session.available_rooms",
+            "type": "replace"
+          }
+        ],
+        "transitions": [
+          {
+            "when": { "type": "condition", "value": "available_rooms.length > 0" },
+            "to_state": "pricing_calculation",
+            "priority": 10
+          },
+          {
+            "when": { "type": "condition", "value": "available_rooms.length == 0" },
+            "to_state": "no_availability",
+            "priority": 10
+          },
+          {
+            "when": { "type": "tool_result", "value": "agent.inventory.search:error" },
+            "to_state": "error_handling",
+            "priority": 20
+          }
+        ],
+        "is_terminal": false,
+        "max_iterations": 3
+      },
+      {
+        "id": "pricing_calculation",
+        "name": "Cálculo de Preços (RF3)",
+        "description": "Delega cálculo de preços ao PricingAgent",
+        "prompt_blocks": [
+          {
+            "role": "system",
+            "content": "Delegue o cálculo de preços ao PricingAgent. Este agente aplica regras de precificação dinâmica, promoções ativas e ajustes por demanda.",
+            "priority": 10
+          },
+          {
+            "role": "instructions",
+            "content": "1. Envie lista de quartos disponíveis ao PricingAgent\n2. Inclua datas e número de noites\n3. Aguarde retorno com preços calculados\n4. Combine informações de disponibilidade + preços",
+            "priority": 5
+          }
+        ],
+        "allowed_tools": ["agent.pricing.calculate"],
+        "memory_writes": [
+          {
+            "path": "session.priced_options",
+            "type": "replace"
+          }
+        ],
+        "transitions": [
+          {
+            "when": { "type": "tool_result", "value": "agent.pricing.calculate:success" },
+            "to_state": "options_presentation",
+            "priority": 10
+          },
+          {
+            "when": { "type": "tool_result", "value": "agent.pricing.calculate:error" },
+            "to_state": "error_handling",
+            "priority": 20
+          }
+        ],
+        "is_terminal": false,
+        "max_iterations": 3
+      },
+      {
+        "id": "options_presentation",
+        "name": "Apresentação de Opções (RF4)",
+        "description": "Compila e apresenta opções ao cliente",
+        "prompt_blocks": [
+          {
+            "role": "system",
+            "content": "Apresente as opções de acomodação ao cliente de forma clara e atrativa. Ordene por relevância considerando preferências, preço e avaliações.",
+            "priority": 10
+          },
+          {
+            "role": "instructions",
+            "content": "1. Ordene opções por match com preferências\n2. Destaque promoções e melhores ofertas\n3. Apresente máximo de 5 opções inicialmente\n4. Inclua fotos, comodidades e política de cancelamento\n5. Aguarde seleção do cliente",
+            "priority": 5
+          }
+        ],
+        "allowed_tools": ["options.rank", "options.format"],
+        "memory_writes": [],
+        "transitions": [
+          {
+            "when": { "type": "intent", "value": "reservar|quero este|selecionar" },
+            "to_state": "booking_confirmation",
+            "priority": 10
+          },
+          {
+            "when": { "type": "intent", "value": "mais opções|outros|diferente" },
+            "to_state": "inventory_check",
+            "priority": 5
+          },
+          {
+            "when": { "type": "intent", "value": "cancelar|não quero|sair" },
+            "to_state": "session_end",
+            "priority": 5
+          }
+        ],
+        "is_terminal": false,
+        "max_iterations": 10
+      },
+      {
+        "id": "booking_confirmation",
+        "name": "Confirmação de Reserva (RF5)",
+        "description": "Processa reserva através do BookingAgent",
+        "prompt_blocks": [
+          {
+            "role": "system",
+            "content": "O cliente selecionou uma opção. Delegue a confirmação da reserva ao BookingAgent que irá bloquear o inventário e gerar a confirmação.",
+            "priority": 10
+          },
+          {
+            "role": "instructions",
+            "content": "1. Verifique disponibilidade uma última vez (pode ter mudado)\n2. Se indisponível, transite para conflito\n3. Envie dados da reserva ao BookingAgent\n4. Aguarde confirmação e número da reserva\n5. Apresente resumo e próximos passos",
+            "priority": 5
+          }
+        ],
+        "allowed_tools": ["agent.booking.confirm", "agent.inventory.lock"],
+        "memory_writes": [
+          {
+            "path": "session.booking",
+            "type": "replace"
+          }
+        ],
+        "transitions": [
+          {
+            "when": { "type": "tool_result", "value": "agent.booking.confirm:success" },
+            "to_state": "booking_success",
+            "priority": 10
+          },
+          {
+            "when": { "type": "tool_result", "value": "agent.inventory.lock:conflict" },
+            "to_state": "conflict_resolution",
+            "priority": 15
+          },
+          {
+            "when": { "type": "tool_result", "value": "agent.booking.confirm:error" },
+            "to_state": "error_handling",
+            "priority": 20
+          }
+        ],
+        "is_terminal": false,
+        "max_iterations": 3
+      },
+      {
+        "id": "conflict_resolution",
+        "name": "Tratamento de Conflitos (RF6)",
+        "description": "Gerencia conflitos de disponibilidade",
+        "prompt_blocks": [
+          {
+            "role": "system",
+            "content": "Houve um conflito de disponibilidade - o quarto selecionado não está mais disponível. Ofereça alternativas similares ao cliente.",
+            "priority": 10
+          },
+          {
+            "role": "instructions",
+            "content": "1. Informe ao cliente que o quarto não está mais disponível\n2. Busque alternativas similares (mesmo tipo, preço próximo)\n3. Ofereça upgrade se disponível por preço similar\n4. Permita nova busca se preferir",
+            "priority": 5
+          }
+        ],
+        "allowed_tools": ["agent.inventory.search", "alternatives.find"],
+        "memory_writes": [],
+        "transitions": [
+          {
+            "when": { "type": "intent", "value": "aceitar|ok|alternativa" },
+            "to_state": "booking_confirmation",
+            "priority": 10
+          },
+          {
+            "when": { "type": "intent", "value": "buscar novamente|outras datas" },
+            "to_state": "request_intake",
+            "priority": 5
+          },
+          {
+            "when": { "type": "intent", "value": "cancelar|desistir" },
+            "to_state": "session_end",
+            "priority": 5
+          }
+        ],
+        "is_terminal": false,
+        "max_iterations": 5
+      },
+      {
+        "id": "no_availability",
+        "name": "Sem Disponibilidade",
+        "description": "Trata casos sem disponibilidade",
+        "prompt_blocks": [
+          {
+            "role": "system",
+            "content": "Não há disponibilidade para os critérios informados. Ofereça alternativas: datas flexíveis, outros tipos de quarto, ou lista de espera.",
+            "priority": 10
+          },
+          {
+            "role": "instructions",
+            "content": "1. Informe que não há disponibilidade\n2. Sugira datas alternativas próximas\n3. Ofereça outros tipos de acomodação\n4. Possibilite cadastro em lista de espera",
+            "priority": 5
+          }
+        ],
+        "allowed_tools": ["availability.suggest_dates", "waitlist.add"],
+        "memory_writes": [],
+        "transitions": [
+          {
+            "when": { "type": "intent", "value": "tentar outras datas|flexível" },
+            "to_state": "request_intake",
+            "priority": 10
+          },
+          {
+            "when": { "type": "intent", "value": "lista de espera|avisar" },
+            "to_state": "waitlist_registration",
+            "priority": 10
+          },
+          {
+            "when": { "type": "intent", "value": "cancelar|não|obrigado" },
+            "to_state": "session_end",
+            "priority": 5
+          }
+        ],
+        "is_terminal": false,
+        "max_iterations": 5
+      },
+      {
+        "id": "waitlist_registration",
+        "name": "Cadastro em Lista de Espera",
+        "description": "Registra cliente em lista de espera",
+        "prompt_blocks": [
+          {
+            "role": "system",
+            "content": "Cadastre o cliente na lista de espera para as datas desejadas. Colete email ou telefone para notificação.",
+            "priority": 10
+          }
+        ],
+        "allowed_tools": ["waitlist.register", "notification.setup"],
+        "memory_writes": [
+          {
+            "path": "user.waitlist_entries",
+            "type": "append"
+          }
+        ],
+        "transitions": [
+          {
+            "when": { "type": "tool_result", "value": "waitlist.register:success" },
+            "to_state": "session_end",
+            "priority": 10
+          }
+        ],
+        "is_terminal": false,
+        "max_iterations": 3
+      },
+      {
+        "id": "booking_success",
+        "name": "Reserva Confirmada",
+        "description": "Exibe confirmação de reserva",
+        "prompt_blocks": [
+          {
+            "role": "system",
+            "content": "A reserva foi confirmada com sucesso! Apresente o resumo completo e instruções de próximos passos.",
+            "priority": 10
+          },
+          {
+            "role": "instructions",
+            "content": "1. Exiba número da confirmação\n2. Resumo: datas, acomodação, valor total\n3. Política de cancelamento\n4. Instruções de check-in\n5. Ofereça serviços adicionais",
+            "priority": 5
+          }
+        ],
+        "allowed_tools": ["confirmation.generate", "email.send"],
+        "memory_writes": [
+          {
+            "path": "user.bookings",
+            "type": "append"
+          }
+        ],
+        "transitions": [
+          {
+            "when": { "type": "condition", "value": "iteration >= 1" },
+            "to_state": "session_end",
+            "priority": 5
+          }
+        ],
+        "is_terminal": false,
+        "max_iterations": 3
+      },
+      {
+        "id": "error_handling",
+        "name": "Tratamento de Erros",
+        "description": "Gerencia erros do sistema",
+        "prompt_blocks": [
+          {
+            "role": "system",
+            "content": "Ocorreu um erro no sistema. Informe ao cliente e ofereça alternativas: tentar novamente, falar com atendente, ou tentar mais tarde.",
+            "priority": 10
+          }
+        ],
+        "allowed_tools": ["error.log", "support.escalate"],
+        "memory_writes": [],
+        "transitions": [
+          {
+            "when": { "type": "intent", "value": "tentar novamente|retry" },
+            "to_state": "request_intake",
+            "priority": 10
+          },
+          {
+            "when": { "type": "intent", "value": "atendente|humano|ajuda" },
+            "to_state": "human_handoff",
+            "priority": 15
+          }
+        ],
+        "is_terminal": false,
+        "max_iterations": 3
+      },
+      {
+        "id": "human_handoff",
+        "name": "Transferência para Humano",
+        "description": "Transfere para atendente humano",
+        "prompt_blocks": [
+          {
+            "role": "system",
+            "content": "Transfira o atendimento para um agente humano. Compile contexto da conversa para handoff.",
+            "priority": 10
+          }
+        ],
+        "allowed_tools": ["handoff.prepare", "handoff.transfer"],
+        "memory_writes": [],
+        "transitions": [
+          {
+            "when": { "type": "tool_result", "value": "handoff.transfer:success" },
+            "to_state": "session_end",
+            "priority": 10
+          }
+        ],
+        "is_terminal": false,
+        "max_iterations": 2
+      },
+      {
+        "id": "session_end",
+        "name": "Fim da Sessão",
+        "description": "Encerra a sessão de busca",
+        "prompt_blocks": [
+          {
+            "role": "system",
+            "content": "Encerre a sessão de forma cordial. Agradeça e convide para retornar.",
+            "priority": 10
+          }
+        ],
+        "allowed_tools": ["session.close", "feedback.request"],
+        "memory_writes": [],
+        "transitions": [],
+        "is_terminal": true,
+        "max_iterations": 1
+      }
+    ]
+  },
+  "tools": {
+    "tools": [
+      {
+        "type": "http",
+        "name": "request.validate",
+        "description": "Valida solicitação de busca",
+        "endpoint": "https://api.accommodation.com/search/validate",
+        "method": "POST",
+        "parameters": {
+          "check_in": { "type": "string", "required": true },
+          "check_out": { "type": "string", "required": true },
+          "guests": { "type": "object", "required": true },
+          "preferences": { "type": "object", "required": false }
+        }
+      },
+      {
+        "type": "mcp",
+        "name": "agent.inventory.search",
+        "description": "Delega busca de inventário ao InventoryAgent",
+        "server": "inventory-agent",
+        "tool_name": "search_availability",
+        "parameters": {
+          "search_request": { "type": "object", "required": true }
+        }
+      },
+      {
+        "type": "mcp",
+        "name": "agent.inventory.lock",
+        "description": "Bloqueia inventário para reserva",
+        "server": "inventory-agent",
+        "tool_name": "lock_room",
+        "parameters": {
+          "room_id": { "type": "string", "required": true },
+          "dates": { "type": "object", "required": true }
+        }
+      },
+      {
+        "type": "mcp",
+        "name": "agent.pricing.calculate",
+        "description": "Delega cálculo de preços ao PricingAgent",
+        "server": "pricing-agent",
+        "tool_name": "calculate_prices",
+        "parameters": {
+          "rooms": { "type": "array", "required": true },
+          "dates": { "type": "object", "required": true }
+        }
+      },
+      {
+        "type": "mcp",
+        "name": "agent.booking.confirm",
+        "description": "Confirma reserva através do BookingAgent",
+        "server": "booking-agent",
+        "tool_name": "confirm_booking",
+        "parameters": {
+          "room_id": { "type": "string", "required": true },
+          "guest_info": { "type": "object", "required": true },
+          "payment_token": { "type": "string", "required": false }
+        }
+      },
+      {
+        "type": "http",
+        "name": "options.rank",
+        "description": "Ordena opções por relevância",
+        "endpoint": "https://api.accommodation.com/options/rank",
+        "method": "POST",
+        "parameters": {
+          "options": { "type": "array", "required": true },
+          "preferences": { "type": "object", "required": true }
+        }
+      }
+    ],
+    "serialization_order": [
+      "request.validate",
+      "agent.inventory.search",
+      "agent.inventory.lock",
+      "agent.pricing.calculate",
+      "agent.booking.confirm",
+      "options.rank"
+    ]
+  },
+  "memory": {
+    "short_term": {
+      "enabled": true,
+      "max_tokens": 6000,
+      "summarization_threshold": 5000
+    },
+    "long_term": {
+      "enabled": true,
+      "namespaces": [
+        {
+          "name": "user_preferences",
+          "scope": "user",
+          "retention": { "type": "permanent" }
+        },
+        {
+          "name": "booking_history",
+          "scope": "user",
+          "retention": { "type": "permanent" }
+        }
+      ]
+    }
+  },
+  "evals": {
+    "golden_tests": [
+      {
+        "id": "gt-001",
+        "name": "Fluxo completo multi-agente",
+        "description": "Busca, precificação e reserva coordenados entre agentes",
+        "conversation": [
+          { "role": "user", "content": "Quero reservar um quarto para 2 adultos, de 15 a 18 de janeiro" }
+        ],
+        "asserts": [
+          { "type": "tool_called", "value": "agent.inventory.search" },
+          { "type": "tool_called", "value": "agent.pricing.calculate" }
+        ],
+        "tags": ["multi-agent", "happy-path"]
+      }
+    ],
+    "safety_tests": [],
+    "coverage_threshold": 75,
+    "run_on_deploy": true
+  },
+  "deployments": {
+    "environments": ["staging", "production"],
+    "approvals_required": true,
+    "auto_rollback": true,
+    "canary_percentage": 10
+  },
+  "versions": []
+}

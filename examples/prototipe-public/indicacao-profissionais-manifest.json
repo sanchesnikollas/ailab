@@ -1,0 +1,90 @@
+{
+  "$schema": "https://ialab.dev/schemas/agent-manifest-v1.json",
+  "manifest_version": "1.0",
+  "metadata": {
+    "id": "00000000-0000-0000-0000-000000000a02",
+    "name": "Saúde Conecta",
+    "slug": "saude-conecta-public",
+    "domain": "healthcare",
+    "tags": ["healthcare", "provider-matching", "patient-support"],
+    "owner": "public-catalog",
+    "risk_level": "high",
+    "data_classification": "confidential"
+  },
+  "prd": {
+    "purpose": "Conectar pacientes a profissionais de saúde adequados com recomendações personalizadas.",
+    "scope": "Coleta sintomas e preferências, consulta base credenciada e entrega contatos; não agenda sem confirmação.",
+    "context_problem": "Pacientes têm dificuldade para encontrar profissionais aderentes às suas necessidades.",
+    "expected_impacts": [
+      "Reduzir tempo para encontrar profissional adequado",
+      "Aumentar satisfação com recomendações",
+      "Melhorar aderência entre necessidade e especialidade"
+    ],
+    "solution_overview": "Agente conversacional que recebe sintomas/preferências, consulta diretório de credenciados e recomenda profissionais com dados de contato.",
+    "requirements": [
+      {"id": "RF1", "title": "Coletar sintomas", "description": "Registrar sintomas e dados básicos do paciente"},
+      {"id": "RF2", "title": "Consultar base de profissionais", "description": "Buscar profissionais compatíveis"},
+      {"id": "RF3", "title": "Recomendar e fornecer contato", "description": "Apresentar recomendações e contatos"}
+    ]
+  },
+  "fsm": {
+    "initial_state": "identificacao-inicial-do-usuario",
+    "fallback_state": "fallback",
+    "states": [
+      {
+        "id": "identificacao-inicial-do-usuario",
+        "name": "Identificação Inicial do Usuário",
+        "description": "Cumprimenta, valida identidade e registra preferências gerais.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Apresente-se e peça consentimento antes de prosseguir."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "inicio-sessao-e-roteamento",
+        "name": "Estado de Início da Sessão e Roteamento",
+        "description": "Classifica intenção (busca, dúvida, contato) e direciona fluxo.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Classifique e oriente para coleta de dados do paciente."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "recepcao-de-dados-do-paciente",
+        "name": "Recepção de Dados do Paciente",
+        "description": "Coleta sintomas, condições e preferências de atendimento.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Use perguntas estruturadas e confirme dados críticos."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "consulta-e-recomendacao-de-profissional",
+        "name": "Consulta e Recomendação de Profissional",
+        "description": "Consulta base credenciada e prepara lista ordenada de profissionais.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Explique critérios de recomendação e peça confirmação antes do contato."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "fornecimento-de-contato-do-profissional",
+        "name": "Fornecimento de Contato do Profissional",
+        "description": "Entrega dados de contato e próximos passos.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Compartilhe contato de forma segura e registre consentimento."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "fallback",
+        "name": "Mapa de Estados (Fallback)",
+        "description": "Reorienta quando intenção não é reconhecida ou fora de escopo.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Liste opções disponíveis sem oferecer diagnóstico ou agendamento direto."}
+        ],
+        "transitions": []
+      }
+    ]
+  }
+}

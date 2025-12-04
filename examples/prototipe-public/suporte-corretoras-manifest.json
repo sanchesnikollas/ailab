@@ -1,0 +1,48 @@
+{
+  "$schema": "https://ialab.dev/schemas/agent-manifest-v1.json",
+  "manifest_version": "1.0",
+  "metadata": {
+    "id": "00000000-0000-0000-0000-000000000a06",
+    "name": "Agente de Suporte para Corretoras de Saúde",
+    "slug": "suporte-corretoras",
+    "domain": "healthcare",
+    "tags": ["healthcare", "support", "broker"],
+    "owner": "public-catalog",
+    "risk_level": "medium",
+    "data_classification": "confidential"
+  },
+  "prd": {
+    "purpose": "Atender dúvidas frequentes em corretoras de saúde (cobertura, boletos, dados cadastrais, portabilidade).",
+    "scope": "Suporte conversacional para tarefas administrativas; não fornece aconselhamento médico nem transações financeiras.",
+    "context_problem": "Volume alto de chamados repetitivos e falta de padronização nas respostas.",
+    "expected_impacts": [
+      "Reduzir tickets repetitivos em 60%",
+      "Padronizar comunicação",
+      "Disponibilizar suporte imediato 24/7"
+    ],
+    "solution_overview": "Agente que identifica intenção e segue fluxos específicos de suporte administrativo em corretoras.",
+    "requirements": [
+      {"id": "RF1", "title": "Cobertura", "description": "Responder cobertura de exames/procedimentos"},
+      {"id": "RF2", "title": "Financeiro", "description": "Segunda via de boleto e pendências"},
+      {"id": "RF3", "title": "Dados", "description": "Atualização cadastral"},
+      {"id": "RF4", "title": "Portabilidade", "description": "Orientar sobre cancelamento ou portabilidade"}
+    ]
+  },
+  "fsm": {
+    "initial_state": "identificacao-inicial-do-usuario",
+    "fallback_state": "fallback",
+    "states": [
+      {"id": "identificacao-inicial-do-usuario", "name": "Identificação Inicial do Usuário", "description": "Identifica e autentica o usuário.", "prompt_blocks": [{"role": "system", "content": "Verifique dados básicos e contexto do pedido."}], "transitions": []},
+      {"id": "inicio-da-sessao-e-roteamento", "name": "Estado de Início da Sessão e Roteamento", "description": "Classifica intenção e direciona para o fluxo correto.", "prompt_blocks": [{"role": "system", "content": "Use intenções pré-definidas e confirme antes de executar."}], "transitions": []},
+      {"id": "suporte-cobertura", "name": "Suporte para Cobertura de Procedimentos", "description": "Informa cobertura e carência.", "prompt_blocks": [{"role": "system", "content": "Solicite plano, procedimento e data para checar cobertura."}], "transitions": []},
+      {"id": "segunda-via-boletos", "name": "Emissão de Segunda Via de Boletos", "description": "Gera instruções ou link de 2ª via.", "prompt_blocks": [{"role": "system", "content": "Valide dados de cobrança antes de gerar link."}], "transitions": []},
+      {"id": "atualizacao-dados-cadastrais", "name": "Atualização de Dados Cadastrais", "description": "Coleta e atualiza dados básicos.", "prompt_blocks": [{"role": "system", "content": "Peça campos obrigatórios e confirme atualização."}], "transitions": []},
+      {"id": "negociacao-pendencias", "name": "Negociação de Pendências Financeiras", "description": "Orienta sobre pendências e próximos passos.", "prompt_blocks": [{"role": "system", "content": "Não conclua pagamentos; apenas oriente e encaminhe."}], "transitions": []},
+      {"id": "status-reembolsos", "name": "Status de Reembolsos", "description": "Consulta status ou orienta envio de documentos.", "prompt_blocks": [{"role": "system", "content": "Peça identificador de protocolo e devolva status."}], "transitions": []},
+      {"id": "cancelamento-portabilidade", "name": "Cancelamento ou Portabilidade", "description": "Orientações sobre troca de plano.", "prompt_blocks": [{"role": "system", "content": "Liste passos e documentos necessários, sem efetivar ação."}], "transitions": []},
+      {"id": "busca-prestadores", "name": "Busca de Prestadores de Saúde Credenciados", "description": "Busca prestadores por especialidade/local.", "prompt_blocks": [{"role": "system", "content": "Peça cidade/CEP e especialidade antes de sugerir."}], "transitions": []},
+      {"id": "suporte-tecnico", "name": "Suporte Técnico e Uso de Aplicativos", "description": "Instruções básicas de uso do app.", "prompt_blocks": [{"role": "system", "content": "Forneça passos claros; encaminhe casos complexos."}], "transitions": []},
+      {"id": "fallback", "name": "Mapa de Estados (Fallback)", "description": "Reorienta quando fora de escopo ou sem dados.", "prompt_blocks": [{"role": "system", "content": "Explique limitações e sugira intenções válidas."}], "transitions": []}
+    ]
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "$schema": "https://ialab.dev/schemas/agent-manifest-v1.json",
+  "manifest_version": "1.0",
+  "metadata": {
+    "id": "00000000-0000-0000-0000-000000000a01",
+    "name": "Assistente de Reembolso",
+    "slug": "assistente-reembolso",
+    "domain": "healthcare",
+    "tags": ["healthcare", "customer-support", "reimbursement"],
+    "owner": "public-catalog",
+    "risk_level": "medium",
+    "data_classification": "confidential"
+  },
+  "prd": {
+    "purpose": "Esclarecer dúvidas sobre reembolso em planos de saúde com respostas claras sobre documentos, prazos, cobertura e status.",
+    "scope": "Autatendimento conversacional para reembolso; não abre solicitações nem processa pagamentos.",
+    "context_problem": "Alto volume de dúvidas, informações inconsistentes e atrasos no processamento de reembolsos.",
+    "expected_impacts": [
+      "Reduzir consultas humanas sobre reembolso em até 60%",
+      "Aumentar a precisão no envio de documentos",
+      "Melhorar a satisfação do cliente com autoatendimento 24/7"
+    ],
+    "solution_overview": "Agente especializado em reembolso que responde perguntas frequentes, orienta sobre documentos, prazos e cobertura e consulta status existente.",
+    "requirements": [
+      {"id": "RF1", "title": "Documentação necessária", "description": "Listar documentos por tipo de reembolso"},
+      {"id": "RF2", "title": "Prazos e pagamentos", "description": "Explicar prazos e etapas do processo"},
+      {"id": "RF3", "title": "Cobertura", "description": "Verificar se um procedimento é coberto"},
+      {"id": "RF4", "title": "Status", "description": "Consultar status de solicitações existentes"}
+    ]
+  },
+  "fsm": {
+    "initial_state": "estado-de-roteamento-inicial",
+    "fallback_state": "fallback",
+    "states": [
+      {
+        "id": "estado-de-roteamento-inicial",
+        "name": "Estado de Roteamento Inicial",
+        "description": "Identifica a intenção principal do usuário (documentos, prazos, cobertura ou status).",
+        "prompt_blocks": [
+          {"role": "system", "content": "Classifique a intenção e encaminhe para o estado correto, mantendo contexto de reembolso."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "duvidas-sobre-documentacao",
+        "name": "Dúvidas sobre Documentação",
+        "description": "Responde quais documentos são exigidos para cada tipo de reembolso.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Liste documentos necessários e valide se o usuário já os possui."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "duvidas-sobre-prazos",
+        "name": "Dúvidas sobre Prazos",
+        "description": "Informa SLA de análise e pagamento e explica etapas.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Explique prazos de forma objetiva e peça confirmação do tipo de reembolso."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "verificacao-de-cobertura",
+        "name": "Verificação de Cobertura",
+        "description": "Confere se o procedimento/serviço é coberto e quais limites se aplicam.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Solicite dados mínimos (procedimento, plano, data) e devolva resultado."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "consulta-de-status-de-reembolso",
+        "name": "Consulta de Status de Reembolso",
+        "description": "Recupera status de solicitações existentes, validando identidade.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Peça identificador da solicitação e devolva status detalhado."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "fallback",
+        "name": "Mapa de Estados (Fallback)",
+        "description": "Fallback para rotações e pedidos fora do escopo.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Reoriente para intenções suportadas; não abra novas solicitações nem processe pagamentos."}
+        ],
+        "transitions": []
+      }
+    ]
+  }
+}

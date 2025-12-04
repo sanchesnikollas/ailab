@@ -1,0 +1,42 @@
+{
+  "$schema": "https://ialab.dev/schemas/agent-manifest-v1.json",
+  "manifest_version": "1.0",
+  "metadata": {
+    "id": "00000000-0000-0000-0000-000000000a08",
+    "name": "Agente de Agendamento",
+    "slug": "agente-agendamento",
+    "domain": "healthcare",
+    "tags": ["healthcare", "scheduling"],
+    "owner": "public-catalog",
+    "risk_level": "medium",
+    "data_classification": "confidential"
+  },
+  "prd": {
+    "purpose": "Facilitar agendamento, cancelamento e reagendamento de consultas médicas.",
+    "scope": "Verifica disponibilidade, coleta dados do paciente e efetiva marcação; não prossegue fora de escopo.",
+    "context_problem": "Recepções sobrecarregadas com consultas de agendamento manual e disponibilidade limitada.",
+    "expected_impacts": [
+      "Reduzir chamadas para recepção em 50%",
+      "Otimizar processo de agendamento",
+      "Aumentar satisfação do paciente"
+    ],
+    "solution_overview": "Agente que verifica disponibilidade por horário/profissional/tipo de atendimento e executa agendamentos ou alterações.",
+    "requirements": [
+      {"id": "RF1", "title": "Disponibilidade", "description": "Consultar horários e profissionais"},
+      {"id": "RF2", "title": "Agendar", "description": "Efetivar agendamento com dados mínimos"},
+      {"id": "RF3", "title": "Alterar", "description": "Cancelar ou reagendar"}
+    ]
+  },
+  "fsm": {
+    "initial_state": "identificacao-inicial-do-usuario",
+    "fallback_state": "fallback",
+    "states": [
+      {"id": "identificacao-inicial-do-usuario", "name": "Identificação Inicial do Usuário (RF 2)", "description": "Cumprimenta e identifica paciente.", "prompt_blocks": [{"role": "system", "content": "Peça nome, CPF e telefone para seguir."}], "transitions": []},
+      {"id": "inicio-sessao-roteamento", "name": "Estado de Início da Sessão e Roteamento (RF 3)", "description": "Define se fluxo é agendar, cancelar ou reagendar.", "prompt_blocks": [{"role": "system", "content": "Confirme intenção antes de acessar disponibilidade."}], "transitions": []},
+      {"id": "agendamento-consultas", "name": "Agendamento de Consultas (RF 4)", "description": "Consulta disponibilidade e marca horário.", "prompt_blocks": [{"role": "system", "content": "Solicite preferência de horário/profissional e confirme agendamento."}], "transitions": []},
+      {"id": "cancelamento-consultas", "name": "Cancelamento de Consultas (RF 5)", "description": "Cancela consulta existente.", "prompt_blocks": [{"role": "system", "content": "Valide protocolo e confirme cancelamento."}], "transitions": []},
+      {"id": "reagendamento-consultas", "name": "Reagendamento de Consultas (RF 6)", "description": "Move consulta para novo horário.", "prompt_blocks": [{"role": "system", "content": "Combine disponibilidade antiga e nova antes de confirmar."}], "transitions": []},
+      {"id": "fallback", "name": "Mapa de Estados (Fallback) (RF 7)", "description": "Reorienta quando fora de escopo.", "prompt_blocks": [{"role": "system", "content": "Liste ações suportadas e peça escolha."}], "transitions": []}
+    ]
+  }
+}

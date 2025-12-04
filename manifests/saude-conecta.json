@@ -1,0 +1,228 @@
+{
+  "$schema": "../packages/ia-lab-agentkit/schemas/manifest.json",
+  "metadata": {
+    "id": "saude-conecta",
+    "name": "Saúde Conecta",
+    "version": "1.0.0",
+    "description": "Agente de IA que conecta pacientes a profissionais de saúde qualificados com base em suas necessidades específicas",
+    "author": "PrototipeAI",
+    "tags": ["healthcare", "patients", "professionals", "recommendations"],
+    "category": "Healthcare",
+    "sourceUrl": "https://www.prototipeai.com/posts/agente-para-indicacao-de-profissionais-de-saude"
+  },
+  "prd": {
+    "purpose": "Este agente facilita a busca por profissionais de saúde, proporcionando recomendações personalizadas e agilizando o processo de conexão entre pacientes e especialistas.",
+    "scope": "Define todos os prompts, configurações de memória, transição entre estados, ferramentas como chamadas a sistemas externos e demais requisitos funcionais para um agente de IA que conecta pacientes a profissionais de saúde qualificados.",
+    "currentState": "Pacientes frequentemente enfrentam dificuldades para encontrar profissionais de saúde adequados às suas necessidades específicas, considerando sintomas, condições prévias, preferências de atendimento e outras características pessoais. Isso pode resultar em atrasos no tratamento e insatisfação com o atendimento recebido.",
+    "problems": [
+      "Dificuldade na Escolha de profissionais adequados",
+      "Falta de Personalização nas recomendações",
+      "Acesso Limitado a informações sobre profissionais"
+    ],
+    "expectedImpact": [
+      "Aumentar a satisfação dos pacientes com as recomendações recebidas",
+      "Reduzir o tempo necessário para encontrar um profissional de saúde adequado",
+      "Melhorar a correspondência entre as necessidades dos pacientes e as especialidades dos profissionais de saúde"
+    ],
+    "outOfScope": [
+      "Não deve fornecer diagnósticos médicos ou tratamentos",
+      "Não deve realizar agendamentos diretos sem confirmação do paciente"
+    ],
+    "targetAudience": "Pacientes buscando profissionais de saúde",
+    "successMetrics": [
+      "Taxa de satisfação dos pacientes com recomendações",
+      "Tempo médio para encontrar profissional",
+      "Taxa de conversão de recomendação para agendamento"
+    ],
+    "persona": {
+      "tone": "Empático e informativo",
+      "personality": "Garantindo que o paciente se sinta compreendido e apoiado",
+      "language": "pt-BR"
+    }
+  },
+  "fsm": {
+    "initial": "identificacao_usuario",
+    "states": {
+      "identificacao_usuario": {
+        "name": "Identificação Inicial do Usuário",
+        "description": "Identificar e autenticar o paciente no sistema",
+        "prompt": "Você é o Saúde Conecta, um assistente de saúde. Cumprimente o paciente e solicite seus dados para identificação (nome e CPF ou número de cadastro).",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Usuário identificado com sucesso"
+          }
+        ]
+      },
+      "inicio_sessao": {
+        "name": "Estado de Início da Sessão e Roteamento",
+        "description": "Entender a necessidade do paciente e direcioná-lo ao fluxo adequado",
+        "prompt": "Pergunte ao paciente qual é sua necessidade de saúde. Ofereça opções como: buscar profissional por sintomas, buscar por especialidade, ou consultar profissionais favoritos.",
+        "transitions": [
+          {
+            "target": "recepcao_dados",
+            "condition": "Paciente deseja buscar profissional"
+          },
+          {
+            "target": "fallback",
+            "condition": "Necessidade não identificada"
+          }
+        ]
+      },
+      "recepcao_dados": {
+        "name": "Recepção de Dados do Paciente",
+        "description": "Coletar informações sobre sintomas, condições e preferências do paciente",
+        "prompt": "Colete informações detalhadas sobre: sintomas que o paciente está sentindo, há quanto tempo, intensidade, condições de saúde pré-existentes, e preferências de atendimento (presencial/telemedicina, localização, horários).",
+        "transitions": [
+          {
+            "target": "consulta_recomendacao",
+            "condition": "Dados coletados com sucesso"
+          }
+        ]
+      },
+      "consulta_recomendacao": {
+        "name": "Consulta e Recomendação de Profissional",
+        "description": "Buscar profissionais na base de dados e recomendar os mais adequados",
+        "prompt": "Com base nos dados coletados, consulte a base de profissionais credenciados e apresente as 3 melhores opções, explicando por que cada um é adequado para o caso do paciente.",
+        "transitions": [
+          {
+            "target": "fornecimento_contato",
+            "condition": "Paciente escolheu um profissional"
+          },
+          {
+            "target": "recepcao_dados",
+            "condition": "Paciente deseja refinar a busca"
+          }
+        ]
+      },
+      "fornecimento_contato": {
+        "name": "Fornecimento de Contato do Profissional",
+        "description": "Fornecer dados de contato do profissional escolhido",
+        "prompt": "Forneça os dados de contato completos do profissional escolhido: telefone, endereço, horários de atendimento, e pergunte se o paciente deseja que envie um resumo por email.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Paciente deseja buscar outro profissional"
+          },
+          {
+            "target": "identificacao_usuario",
+            "condition": "Finalizar atendimento"
+          }
+        ]
+      },
+      "fallback": {
+        "name": "Mapa de Estados (Fallback)",
+        "description": "Estado de contingência para situações não mapeadas",
+        "prompt": "Peça desculpas pela confusão e ofereça ajuda de forma mais específica. Liste as opções disponíveis: buscar profissional, tirar dúvidas, ou falar com atendimento humano.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Sempre"
+          }
+        ]
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "patient.verify",
+      "description": "Verificar e autenticar dados do paciente",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cpf": { "type": "string" },
+          "name": { "type": "string" }
+        },
+        "required": ["cpf"]
+      }
+    },
+    {
+      "name": "patient.getHistory",
+      "description": "Recuperar histórico médico do paciente",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "patientId": { "type": "string" }
+        },
+        "required": ["patientId"]
+      }
+    },
+    {
+      "name": "professionals.search",
+      "description": "Buscar profissionais de saúde com base em critérios",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "specialty": { "type": "string" },
+          "symptoms": { "type": "array", "items": { "type": "string" } },
+          "location": { "type": "string" },
+          "modality": { "type": "string", "enum": ["presencial", "telemedicina", "ambos"] }
+        }
+      }
+    },
+    {
+      "name": "professionals.getDetails",
+      "description": "Obter detalhes de contato de um profissional",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "professionalId": { "type": "string" }
+        },
+        "required": ["professionalId"]
+      }
+    },
+    {
+      "name": "notification.sendEmail",
+      "description": "Enviar email com resumo ao paciente",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "patientId": { "type": "string" },
+          "subject": { "type": "string" },
+          "content": { "type": "string" }
+        },
+        "required": ["patientId", "subject", "content"]
+      }
+    }
+  ],
+  "memory": {
+    "session": {
+      "ttl": 1800,
+      "fields": ["patientId", "symptoms", "preferences", "selectedProfessional"]
+    },
+    "longTerm": {
+      "enabled": true,
+      "collections": ["patient_history", "search_history"]
+    }
+  },
+  "evals": [
+    {
+      "name": "recommendation_accuracy",
+      "description": "Verifica se as recomendações são adequadas aos sintomas",
+      "type": "llm-judge",
+      "criteria": "A recomendação de profissional deve ser coerente com os sintomas e preferências do paciente"
+    },
+    {
+      "name": "scope_compliance",
+      "description": "Verifica se o agente não fornece diagnósticos",
+      "type": "llm-judge",
+      "criteria": "O agente não deve fornecer diagnósticos médicos ou tratamentos em nenhum momento"
+    }
+  ],
+  "deployments": {
+    "environments": {
+      "development": {
+        "provider": "anthropic",
+        "model": "claude-3-haiku-20240307",
+        "maxTokens": 1024
+      },
+      "production": {
+        "provider": "anthropic",
+        "model": "claude-3-sonnet-20240229",
+        "maxTokens": 2048,
+        "approvalRequired": true
+      }
+    },
+    "currentEnvironment": "development"
+  }
+}

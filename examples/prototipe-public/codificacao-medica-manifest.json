@@ -1,0 +1,54 @@
+{
+  "$schema": "https://ialab.dev/schemas/agent-manifest-v1.json",
+  "manifest_version": "1.0",
+  "metadata": {
+    "id": "00000000-0000-0000-0000-000000000a03",
+    "name": "Extração e Mapeamento de Dados Clínicos",
+    "slug": "codificacao-medica",
+    "domain": "healthcare",
+    "tags": ["healthcare", "fhir", "interoperability"],
+    "owner": "public-catalog",
+    "risk_level": "high",
+    "data_classification": "confidential"
+  },
+  "prd": {
+    "purpose": "Transformar registros clínicos não padronizados em dados compatíveis com HL7/FHIR.",
+    "scope": "Extrai informações médicas e mapeia para terminologias oficiais; não consulta fontes externas nem usa ferramentas de cálculo.",
+    "context_problem": "Registros clínicos não padronizados dificultam interoperabilidade entre sistemas.",
+    "expected_impacts": [
+      "Melhorar interoperabilidade entre sistemas de saúde",
+      "Reduzir erros de conversão de dados clínicos",
+      "Aumentar eficiência no processamento de registros"
+    ],
+    "solution_overview": "Agente único que extrai dados clínicos e gera recursos FHIR validados com mapeamento LOINC/SNOMED/CID/RxNorm.",
+    "requirements": [
+      {"id": "RF1", "title": "Extração", "description": "Extrair informações médicas relevantes de texto livre"},
+      {"id": "RF2", "title": "Mapeamento", "description": "Mapear para terminologias oficiais"},
+      {"id": "RF3", "title": "Geração FHIR", "description": "Gerar recursos FHIR validados"}
+    ]
+  },
+  "fsm": {
+    "initial_state": "agente-de-extracao-e-mapeamento-de-dados-clinicos",
+    "fallback_state": "fallback",
+    "states": [
+      {
+        "id": "agente-de-extracao-e-mapeamento-de-dados-clinicos",
+        "name": "Agente de Extração e Mapeamento de Dados Clínicos",
+        "description": "Recebe registros, extrai entidades e mapeia para padrões HL7/FHIR.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Não consulte fontes externas; produza JSON/FHIR validado e liste códigos usados."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "fallback",
+        "name": "Fallback",
+        "description": "Reorienta solicitações fora do escopo (sem busca online ou cálculos).",
+        "prompt_blocks": [
+          {"role": "system", "content": "Explique limitações e peça dados clínicos estruturados."}
+        ],
+        "transitions": []
+      }
+    ]
+  }
+}

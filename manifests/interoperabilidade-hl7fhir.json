@@ -1,0 +1,225 @@
+{
+  "$schema": "../packages/ia-lab-agentkit/schemas/manifest.json",
+  "metadata": {
+    "id": "interoperabilidade-hl7fhir",
+    "name": "Fluxo de Interoperabilidade de Dados Clínicos",
+    "version": "1.0.0",
+    "description": "Agente de IA para padronizar prontuários em HL7/FHIR com fluxo sequencial de extração, mapeamento e geração",
+    "author": "PrototipeAI",
+    "tags": ["healthcare", "fhir", "hl7", "interoperability", "workflow"],
+    "category": "Healthcare",
+    "sourceUrl": "https://www.prototipeai.com/posts/fluxo-interoperabilidade-dados-clinicos"
+  },
+  "prd": {
+    "purpose": "Padronizar prontuários em HL7/FHIR através de um fluxo sequencial de três etapas: extração de dados clínicos, mapeamento para terminologias oficiais e geração de recursos FHIR validados.",
+    "scope": "Define todos os prompts, configurações de memória, transição entre estados e requisitos funcionais para um fluxo de agentes de interoperabilidade de dados clínicos.",
+    "currentState": "Dados clínicos frequentemente estão em formatos inconsistentes e o mapeamento para terminologias oficiais é demorado, comprometendo a interoperabilidade entre sistemas de saúde.",
+    "problems": [
+      "Dados clínicos em formatos inconsistentes",
+      "Mapeamento demorado para terminologias oficiais",
+      "Dificuldade na geração de recursos FHIR válidos"
+    ],
+    "expectedImpact": [
+      "Melhorar interoperabilidade entre sistemas de saúde",
+      "Reduzir erros no mapeamento e conversão",
+      "Aumentar eficiência do fluxo clínico"
+    ],
+    "outOfScope": [
+      "Não consulta fontes externas",
+      "Não utiliza ferramentas externas",
+      "Fluxo linear sem ramificações complexas"
+    ],
+    "targetAudience": "Sistemas de saúde e profissionais de TI em saúde",
+    "successMetrics": [
+      "Taxa de extração bem-sucedida",
+      "Precisão no mapeamento de terminologias",
+      "Conformidade dos recursos FHIR gerados"
+    ],
+    "persona": {
+      "tone": "Técnico e preciso",
+      "personality": "Metódico e focado em conformidade com padrões internacionais",
+      "language": "pt-BR"
+    }
+  },
+  "fsm": {
+    "initial": "extracao_dados",
+    "states": {
+      "extracao_dados": {
+        "name": "Extração de Dados Clínicos",
+        "description": "Recebe registros em texto livre ou estruturado e extrai entidades médicas",
+        "prompt": "Você é um especialista em extração de dados clínicos. Receba o registro clínico (texto livre ou estruturado) e extraia todas as entidades médicas relevantes: diagnósticos, procedimentos, medicamentos, exames laboratoriais, sinais vitais e sintomas. Normalize unidades de medida quando aplicável.",
+        "transitions": [
+          {
+            "target": "mapeamento_terminologias",
+            "condition": "Dados extraídos com sucesso"
+          },
+          {
+            "target": "fallback",
+            "condition": "Dados insuficientes para extração"
+          }
+        ]
+      },
+      "mapeamento_terminologias": {
+        "name": "Mapeamento para Terminologias Oficiais",
+        "description": "Mapeia entidades extraídas para LOINC, SNOMED, CID ou RxNorm",
+        "prompt": "Com base nos dados extraídos, mapeie cada entidade para a terminologia oficial apropriada: diagnósticos para CID-10, exames para LOINC, sintomas e condições para SNOMED CT, medicamentos para RxNorm. Inclua os códigos e justificativas para cada escolha de mapeamento.",
+        "transitions": [
+          {
+            "target": "geracao_fhir",
+            "condition": "Mapeamento concluído"
+          }
+        ]
+      },
+      "geracao_fhir": {
+        "name": "Geração de Recursos FHIR",
+        "description": "Cria recursos FHIR validados prontos para envio a sistemas clínicos",
+        "prompt": "Com base nos dados mapeados, gere recursos FHIR válidos para cada entidade: Condition para diagnósticos, Observation para exames e sinais vitais, MedicationStatement para medicamentos, Procedure para procedimentos. Valide campos obrigatórios e retorne um Bundle FHIR completo.",
+        "transitions": [
+          {
+            "target": "extracao_dados",
+            "condition": "Novo registro para processar"
+          }
+        ]
+      },
+      "fallback": {
+        "name": "Estado de Fallback",
+        "description": "Reorienta fluxos fora do escopo ou com dados insuficientes",
+        "prompt": "Os dados clínicos fornecidos estão incompletos ou em formato não reconhecido. Solicite os dados clínicos necessários e reforce que o fluxo é linear: extração, mapeamento e geração FHIR.",
+        "transitions": [
+          {
+            "target": "extracao_dados",
+            "condition": "Dados corrigidos fornecidos"
+          }
+        ]
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "extraction.extractEntities",
+      "description": "Extrair entidades médicas de texto clínico",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "clinicalText": { "type": "string" },
+          "entityTypes": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["clinicalText"]
+      }
+    },
+    {
+      "name": "terminology.mapToCID",
+      "description": "Mapear diagnósticos para código CID-10",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "diagnosis": { "type": "string" }
+        },
+        "required": ["diagnosis"]
+      }
+    },
+    {
+      "name": "terminology.mapToLOINC",
+      "description": "Mapear exames para código LOINC",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labTest": { "type": "string" }
+        },
+        "required": ["labTest"]
+      }
+    },
+    {
+      "name": "terminology.mapToSNOMED",
+      "description": "Mapear sintomas e condições para SNOMED CT",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "clinicalTerm": { "type": "string" }
+        },
+        "required": ["clinicalTerm"]
+      }
+    },
+    {
+      "name": "terminology.mapToRxNorm",
+      "description": "Mapear medicamentos para RxNorm",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "medication": { "type": "string" }
+        },
+        "required": ["medication"]
+      }
+    },
+    {
+      "name": "fhir.generateBundle",
+      "description": "Gerar Bundle FHIR com todos os recursos",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "resources": { "type": "array", "items": { "type": "object" } },
+          "bundleType": { "type": "string", "enum": ["transaction", "collection", "document"] }
+        },
+        "required": ["resources"]
+      }
+    },
+    {
+      "name": "fhir.validate",
+      "description": "Validar recurso FHIR contra perfis",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "resource": { "type": "object" },
+          "profile": { "type": "string" }
+        },
+        "required": ["resource"]
+      }
+    }
+  ],
+  "memory": {
+    "session": {
+      "ttl": 3600,
+      "fields": ["sourceRecord", "extractedEntities", "mappedTerminologies", "fhirResources"]
+    },
+    "longTerm": {
+      "enabled": true,
+      "collections": ["terminology_cache", "conversion_history"]
+    }
+  },
+  "evals": [
+    {
+      "name": "extraction_accuracy",
+      "description": "Verifica precisão na extração de entidades",
+      "type": "llm-judge",
+      "criteria": "Todas as entidades médicas relevantes devem ser extraídas corretamente do texto clínico"
+    },
+    {
+      "name": "terminology_accuracy",
+      "description": "Verifica precisão do mapeamento de terminologias",
+      "type": "llm-judge",
+      "criteria": "Os mapeamentos para CID, LOINC, SNOMED e RxNorm devem ser precisos e corresponder ao contexto clínico"
+    },
+    {
+      "name": "fhir_compliance",
+      "description": "Verifica conformidade dos recursos FHIR gerados",
+      "type": "llm-judge",
+      "criteria": "Os recursos FHIR gerados devem ser válidos e conformes com os perfis especificados"
+    }
+  ],
+  "deployments": {
+    "environments": {
+      "development": {
+        "provider": "anthropic",
+        "model": "claude-3-haiku-20240307",
+        "maxTokens": 2048
+      },
+      "production": {
+        "provider": "anthropic",
+        "model": "claude-3-sonnet-20240229",
+        "maxTokens": 4096,
+        "approvalRequired": true
+      }
+    },
+    "currentEnvironment": "development"
+  }
+}

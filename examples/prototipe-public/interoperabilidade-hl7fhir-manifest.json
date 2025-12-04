@@ -1,0 +1,72 @@
+{
+  "$schema": "https://ialab.dev/schemas/agent-manifest-v1.json",
+  "manifest_version": "1.0",
+  "metadata": {
+    "id": "00000000-0000-0000-0000-000000000a05",
+    "name": "Fluxo de Agentes Interoperabilidade de Dados Clínicos",
+    "slug": "interoperabilidade-hl7fhir",
+    "domain": "healthcare",
+    "tags": ["healthcare", "fhir", "workflow"],
+    "owner": "public-catalog",
+    "risk_level": "high",
+    "data_classification": "confidential"
+  },
+  "prd": {
+    "purpose": "Padronizar prontuários em HL7/FHIR com fluxo sequencial de três agentes.",
+    "scope": "Extrair dados clínicos, mapear terminologias e gerar recursos FHIR; fluxo linear sem ferramentas externas.",
+    "context_problem": "Dados clínicos inconsistentes e mapeamento demorado comprometem interoperabilidade.",
+    "expected_impacts": [
+      "Melhorar interoperabilidade entre sistemas de saúde",
+      "Reduzir erros no mapeamento e conversão",
+      "Aumentar eficiência do fluxo clínico"
+    ],
+    "solution_overview": "Três agentes em sequência: extração, mapeamento terminológico e geração FHIR validada.",
+    "requirements": [
+      {"id": "RF1", "title": "Extração", "description": "Extrair informações médicas relevantes"},
+      {"id": "RF2", "title": "Mapeamento", "description": "Mapear para LOINC/SNOMED/CID/RxNorm"},
+      {"id": "RF3", "title": "Geração FHIR", "description": "Gerar recursos FHIR validados"}
+    ]
+  },
+  "fsm": {
+    "initial_state": "extracao-de-dados-clinicos",
+    "fallback_state": "fallback",
+    "states": [
+      {
+        "id": "extracao-de-dados-clinicos",
+        "name": "Extração de Dados Clínicos",
+        "description": "Recebe registros em texto livre ou estruturado e extrai entidades médicas.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Extraia dados e normalize unidades quando aplicável."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "mapeamento-para-terminologias-oficiais",
+        "name": "Mapeamento para Terminologias Oficiais",
+        "description": "Mapeia entidades para LOINC, SNOMED, CID ou RxNorm.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Inclua códigos e justificativas de escolha."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "geracao-de-recursos-fhir",
+        "name": "Geração de Recursos FHIR",
+        "description": "Cria recursos FHIR validados prontos para envio a sistemas clínicos.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Retorne bundle FHIR e valide campos obrigatórios."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "fallback",
+        "name": "Fallback",
+        "description": "Reorienta fluxos fora do escopo ou com dados insuficientes.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Peça dados clínicos necessários e siga fluxo linear."}
+        ],
+        "transitions": []
+      }
+    ]
+  }
+}

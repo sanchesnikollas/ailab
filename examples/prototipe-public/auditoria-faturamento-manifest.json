@@ -1,0 +1,52 @@
+{
+  "$schema": "https://ialab.dev/schemas/agent-manifest-v1.json",
+  "manifest_version": "1.0",
+  "metadata": {
+    "id": "00000000-0000-0000-0000-000000000a09",
+    "name": "Agente de Auditoria de Faturamento Médico",
+    "slug": "auditoria-faturamento",
+    "domain": "healthcare",
+    "tags": ["healthcare", "audit", "billing"],
+    "owner": "public-catalog",
+    "risk_level": "high",
+    "data_classification": "confidential"
+  },
+  "prd": {
+    "purpose": "Analisar dados de sinistro para identificar duplicações, sobreposições e incompatibilidades em faturamentos médicos.",
+    "scope": "Fluxo único e linear que gera relatório; não consulta fontes externas, não usa calculadora, não conecta a sistemas.",
+    "context_problem": "Processo manual de auditoria é demorado e sujeito a erros, gerando perdas financeiras.",
+    "expected_impacts": [
+      "Reduzir tempo de auditoria em 60%",
+      "Aumentar precisão na identificação de inconsistências",
+      "Diminuir perdas financeiras"
+    ],
+    "solution_overview": "Agente analisa dados de sinistro e produz relatório categorizando inconsistências por tipo e prestador.",
+    "requirements": [
+      {"id": "RF1", "title": "Auditar faturamento", "description": "Detectar duplicações, sobreposições e incompatibilidades"}
+    ]
+  },
+  "fsm": {
+    "initial_state": "agente-de-auditoria-de-faturamento-medico",
+    "fallback_state": "fallback",
+    "states": [
+      {
+        "id": "agente-de-auditoria-de-faturamento-medico",
+        "name": "RF 1. Agente de Auditoria de Faturamento Médico",
+        "description": "Recebe dados de sinistro e gera relatório de inconsistências.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Analise duplicações, sobreposições e incompatibilidades; devolva relatório estruturado."}
+        ],
+        "transitions": []
+      },
+      {
+        "id": "fallback",
+        "name": "Fallback",
+        "description": "Reorienta entradas fora do escopo ou faltantes.",
+        "prompt_blocks": [
+          {"role": "system", "content": "Peça dados de sinistro necessários e reforce limitações."}
+        ],
+        "transitions": []
+      }
+    ]
+  }
+}

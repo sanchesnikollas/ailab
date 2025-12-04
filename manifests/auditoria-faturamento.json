@@ -1,0 +1,164 @@
+{
+  "$schema": "../packages/ia-lab-agentkit/schemas/manifest.json",
+  "metadata": {
+    "id": "auditoria-faturamento",
+    "name": "Agente de Auditoria de Faturamento Médico",
+    "version": "1.0.0",
+    "description": "Agente de IA para analisar dados de sinistro e identificar inconsistências em faturamentos médicos",
+    "author": "PrototipeAI",
+    "tags": ["healthcare", "audit", "billing", "compliance"],
+    "category": "Healthcare",
+    "sourceUrl": "https://www.prototipeai.com/posts/agente-auditoria-faturamento-medico"
+  },
+  "prd": {
+    "purpose": "Analisar dados de sinistro para identificar duplicações, sobreposições e incompatibilidades em faturamentos médicos, gerando relatórios estruturados.",
+    "scope": "Define todos os prompts, configurações de memória e requisitos funcionais para um agente de IA de auditoria de faturamento médico. O fluxo é linear e gera relatório de inconsistências.",
+    "currentState": "O processo manual de auditoria de faturamento médico é demorado e sujeito a erros humanos, gerando perdas financeiras significativas para operadoras de saúde.",
+    "problems": [
+      "Processo manual de auditoria demorado",
+      "Alta taxa de erros na identificação de inconsistências",
+      "Perdas financeiras por falhas na auditoria"
+    ],
+    "expectedImpact": [
+      "Reduzir tempo de auditoria em 60%",
+      "Aumentar precisão na identificação de inconsistências",
+      "Diminuir perdas financeiras por fraudes ou erros"
+    ],
+    "outOfScope": [
+      "Não consulta fontes externas",
+      "Não utiliza calculadora",
+      "Não conecta a sistemas externos"
+    ],
+    "targetAudience": "Auditores e analistas de faturamento em operadoras de saúde",
+    "successMetrics": [
+      "Taxa de detecção de inconsistências",
+      "Tempo médio de auditoria por lote",
+      "Precisão dos relatórios gerados"
+    ],
+    "persona": {
+      "tone": "Técnico e analítico",
+      "personality": "Meticuloso e focado em precisão, apresentando dados de forma clara e estruturada",
+      "language": "pt-BR"
+    }
+  },
+  "fsm": {
+    "initial": "auditoria_faturamento",
+    "states": {
+      "auditoria_faturamento": {
+        "name": "Agente de Auditoria de Faturamento Médico",
+        "description": "Recebe dados de sinistro e gera relatório de inconsistências",
+        "prompt": "Você é um especialista em auditoria de faturamento médico. Analise os dados de sinistro fornecidos e identifique: duplicações (mesmo procedimento cobrado mais de uma vez), sobreposições (procedimentos incompatíveis realizados no mesmo período), e incompatibilidades (procedimentos inconsistentes com diagnóstico ou perfil do paciente). Gere um relatório estruturado categorizando as inconsistências por tipo e prestador.",
+        "transitions": [
+          {
+            "target": "auditoria_faturamento",
+            "condition": "Novo lote de dados para analisar"
+          },
+          {
+            "target": "fallback",
+            "condition": "Dados insuficientes ou fora do formato esperado"
+          }
+        ]
+      },
+      "fallback": {
+        "name": "Estado de Fallback",
+        "description": "Reorienta entradas fora do escopo ou com dados faltantes",
+        "prompt": "Os dados fornecidos não estão no formato esperado ou estão incompletos. Solicite os dados de sinistro necessários no formato correto: lista de procedimentos com códigos, datas, valores e identificação do prestador. Reforce que a análise é limitada aos dados fornecidos.",
+        "transitions": [
+          {
+            "target": "auditoria_faturamento",
+            "condition": "Dados corrigidos fornecidos"
+          }
+        ]
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "audit.analyzeDuplications",
+      "description": "Analisar duplicações em faturamento",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "claims": { "type": "array", "items": { "type": "object" } }
+        },
+        "required": ["claims"]
+      }
+    },
+    {
+      "name": "audit.analyzeOverlaps",
+      "description": "Analisar sobreposições de procedimentos",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "claims": { "type": "array", "items": { "type": "object" } },
+          "timeWindow": { "type": "number" }
+        },
+        "required": ["claims"]
+      }
+    },
+    {
+      "name": "audit.analyzeIncompatibilities",
+      "description": "Analisar incompatibilidades entre procedimentos e diagnósticos",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "claims": { "type": "array", "items": { "type": "object" } },
+          "patientProfile": { "type": "object" }
+        },
+        "required": ["claims"]
+      }
+    },
+    {
+      "name": "report.generate",
+      "description": "Gerar relatório estruturado de auditoria",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "findings": { "type": "array", "items": { "type": "object" } },
+          "format": { "type": "string", "enum": ["json", "pdf", "excel"] }
+        },
+        "required": ["findings"]
+      }
+    }
+  ],
+  "memory": {
+    "session": {
+      "ttl": 3600,
+      "fields": ["currentBatch", "findings", "analysisProgress"]
+    },
+    "longTerm": {
+      "enabled": true,
+      "collections": ["audit_history", "provider_patterns"]
+    }
+  },
+  "evals": [
+    {
+      "name": "detection_accuracy",
+      "description": "Verifica precisão na detecção de inconsistências",
+      "type": "llm-judge",
+      "criteria": "As inconsistências identificadas devem ser válidas e corretamente categorizadas"
+    },
+    {
+      "name": "report_completeness",
+      "description": "Verifica se o relatório está completo",
+      "type": "llm-judge",
+      "criteria": "O relatório deve conter todas as categorias de inconsistências e estar bem estruturado"
+    }
+  ],
+  "deployments": {
+    "environments": {
+      "development": {
+        "provider": "anthropic",
+        "model": "claude-3-haiku-20240307",
+        "maxTokens": 2048
+      },
+      "production": {
+        "provider": "anthropic",
+        "model": "claude-3-sonnet-20240229",
+        "maxTokens": 4096,
+        "approvalRequired": true
+      }
+    },
+    "currentEnvironment": "development"
+  }
+}

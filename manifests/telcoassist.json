@@ -1,0 +1,441 @@
+{
+  "$schema": "../packages/ia-lab-agentkit/schemas/manifest.json",
+  "metadata": {
+    "id": "telcoassist",
+    "name": "TelcoAssist",
+    "version": "1.0.0",
+    "description": "Agente de IA para atendimento automatizado de clientes de telecomunicações: faturas, planos, suporte técnico e mais",
+    "author": "PrototipeAI",
+    "tags": ["telecom", "customer-support", "billing", "technical-support"],
+    "category": "Telecom",
+    "sourceUrl": "https://www.prototipeai.com/posts/telcoassist-agente-telecom"
+  },
+  "prd": {
+    "purpose": "Fornecer atendimento automatizado para clientes de telecomunicações, incluindo emissão de segunda via de fatura, consulta de saldo e consumo, alteração de planos, suporte técnico e mais.",
+    "scope": "Define todos os prompts, configurações de memória, transição entre estados e requisitos funcionais para um agente de atendimento ao cliente de telecom.",
+    "currentState": "Empresas de telecomunicações enfrentam alta demanda de suporte e tempo de espera elevado, aumentando custos operacionais e insatisfação dos clientes.",
+    "problems": [
+      "Alta demanda de suporte ao cliente",
+      "Tempo de espera elevado para atendimento",
+      "Custos operacionais altos com equipe de suporte"
+    ],
+    "expectedImpact": [
+      "Reduzir chamadas de suporte humano em 50%",
+      "Aumentar velocidade de resolução",
+      "Liberar equipe para casos complexos"
+    ],
+    "outOfScope": [
+      "Não realiza mudanças sem consentimento explícito",
+      "Não fornece suporte físico avançado",
+      "Não processa pagamentos diretamente"
+    ],
+    "targetAudience": "Clientes de serviços de telecomunicações",
+    "successMetrics": [
+      "Taxa de resolução no primeiro contato",
+      "Redução de chamadas para suporte humano",
+      "Satisfação do cliente (NPS)"
+    ],
+    "persona": {
+      "tone": "Amigável e eficiente",
+      "personality": "Prestativo e direto, focado em resolver problemas rapidamente",
+      "language": "pt-BR"
+    }
+  },
+  "fsm": {
+    "initial": "identificacao_usuario",
+    "states": {
+      "identificacao_usuario": {
+        "name": "Identificação Inicial do Usuário",
+        "description": "Identifica e autentica o cliente",
+        "prompt": "Você é o TelcoAssist, assistente virtual de atendimento. Cumprimente o cliente e solicite o CPF ou identificador de cliente para validar a identidade. Peça consentimento para acessar os dados da conta.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Cliente identificado e consentimento obtido"
+          }
+        ]
+      },
+      "inicio_sessao": {
+        "name": "Início da Sessão e Roteamento",
+        "description": "Classifica a intenção do cliente e direciona para o fluxo correto",
+        "prompt": "Pergunte ao cliente como pode ajudá-lo. Mapeie a intenção entre: fatura/boleto, reclamação, saldo/consumo, alteração de plano, problemas de conexão, suporte técnico, bloqueio de linha ou atualização de dados. Confirme antes de executar qualquer ação.",
+        "transitions": [
+          {
+            "target": "solicitacao_2a_via",
+            "condition": "Cliente precisa de segunda via de fatura"
+          },
+          {
+            "target": "reclamacoes",
+            "condition": "Cliente quer registrar reclamação"
+          },
+          {
+            "target": "consulta_saldo",
+            "condition": "Cliente quer consultar saldo ou consumo"
+          },
+          {
+            "target": "alteracao_plano",
+            "condition": "Cliente quer alterar plano ou adicionar pacotes"
+          },
+          {
+            "target": "problemas_conexao",
+            "condition": "Cliente relata problemas de conexão"
+          },
+          {
+            "target": "suporte_tecnico",
+            "condition": "Cliente precisa de suporte técnico"
+          },
+          {
+            "target": "reset_modem",
+            "condition": "Cliente precisa resetar modem"
+          },
+          {
+            "target": "bloqueio_linha",
+            "condition": "Cliente quer bloquear ou desbloquear linha"
+          },
+          {
+            "target": "atualizacao_dados",
+            "condition": "Cliente quer atualizar dados cadastrais"
+          },
+          {
+            "target": "encaminhamento_humano",
+            "condition": "Cliente solicita atendimento humano"
+          },
+          {
+            "target": "fallback",
+            "condition": "Intenção não identificada"
+          }
+        ]
+      },
+      "solicitacao_2a_via": {
+        "name": "Solicitação de Segunda Via de Fatura",
+        "description": "Gera instruções ou link para segunda via de fatura",
+        "prompt": "Valide a identidade do cliente e o mês da fatura desejada. Gere o link ou código para acesso à segunda via. Informe valor, vencimento e formas de pagamento disponíveis.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Segunda via gerada com sucesso"
+          }
+        ]
+      },
+      "reclamacoes": {
+        "name": "Reclamações sobre Serviço ou Cobrança",
+        "description": "Registra reclamações e informa próximos passos",
+        "prompt": "Colete detalhes da reclamação do cliente: tipo (serviço, cobrança, atendimento), descrição do problema e período afetado. Registre a reclamação e forneça protocolo de atendimento. Informe prazo de resposta.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Reclamação registrada"
+          },
+          {
+            "target": "encaminhamento_humano",
+            "condition": "Caso crítico que requer atendimento humano"
+          }
+        ]
+      },
+      "consulta_saldo": {
+        "name": "Consulta de Saldo ou Consumo de Dados",
+        "description": "Retorna saldo e consumo atual",
+        "prompt": "Consulte e apresente ao cliente: saldo de créditos (se pré-pago), consumo de dados utilizado, franquia total disponível e data de renovação. Mostre histórico de consumo recente se solicitado.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Informações apresentadas"
+          }
+        ]
+      },
+      "alteracao_plano": {
+        "name": "Alteração de Plano ou Adição de Pacotes",
+        "description": "Propõe alteração de plano com consentimento explícito",
+        "prompt": "Apresente as opções de planos ou pacotes adicionais disponíveis para o cliente. Explique detalhadamente as condições, valores e benefícios de cada opção. Solicite confirmação explícita antes de efetivar qualquer alteração.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Alteração confirmada ou cancelada"
+          }
+        ]
+      },
+      "problemas_conexao": {
+        "name": "Relato de Problemas de Conexão",
+        "description": "Triagem de problemas de conexão e sinal",
+        "prompt": "Colete informações sobre o problema: localização do cliente, tipo de serviço afetado (internet, TV, telefone), sintomas observados e há quanto tempo ocorre. Verifique se há manutenção programada na região. Direcione para suporte técnico se necessário.",
+        "transitions": [
+          {
+            "target": "suporte_tecnico",
+            "condition": "Problema requer suporte técnico"
+          },
+          {
+            "target": "reset_modem",
+            "condition": "Problema pode ser resolvido com reset"
+          },
+          {
+            "target": "inicio_sessao",
+            "condition": "Problema identificado como manutenção na região"
+          }
+        ]
+      },
+      "suporte_tecnico": {
+        "name": "Suporte para Resolução de Problemas Técnicos",
+        "description": "Passo a passo para problemas técnicos comuns",
+        "prompt": "Forneça instruções claras e passo a passo para resolver o problema técnico do cliente. Verifique se o cliente conseguiu seguir cada etapa. Escale para atendimento humano se as instruções não resolverem o problema.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Problema resolvido"
+          },
+          {
+            "target": "encaminhamento_humano",
+            "condition": "Problema não resolvido, requer escalação"
+          }
+        ]
+      },
+      "reset_modem": {
+        "name": "Reset de Modem/Roteador",
+        "description": "Conduz reset seguro do equipamento",
+        "prompt": "Explique ao cliente o procedimento de reset do modem/roteador. Solicite confirmação antes de prosseguir. Guie o cliente passo a passo e aguarde a confirmação de que o equipamento reiniciou. Valide se a conexão foi restabelecida.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Reset bem-sucedido, conexão restabelecida"
+          },
+          {
+            "target": "suporte_tecnico",
+            "condition": "Reset não resolveu o problema"
+          }
+        ]
+      },
+      "bloqueio_linha": {
+        "name": "Bloqueio/Desbloqueio de Linha",
+        "description": "Bloqueia ou desbloqueia linha com consentimento",
+        "prompt": "Verifique o motivo do bloqueio ou desbloqueio solicitado. Reforce os riscos e consequências da ação. Solicite consentimento explícito e confirmação de identidade antes de efetivar. Registre a solicitação.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Ação concluída com sucesso"
+          }
+        ]
+      },
+      "atualizacao_dados": {
+        "name": "Atualização de Dados Cadastrais",
+        "description": "Atualiza dados básicos do cliente",
+        "prompt": "Pergunte quais dados o cliente deseja atualizar: endereço, telefone de contato, email ou outros. Colete os novos dados, valide o formato e confirme as alterações antes de efetivar.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Dados atualizados com sucesso"
+          }
+        ]
+      },
+      "encaminhamento_humano": {
+        "name": "Encaminhamento para Atendimento Humano",
+        "description": "Escalação para atendente humano",
+        "prompt": "Informe ao cliente que será transferido para um atendente humano. Forneça o protocolo de atendimento gerado e explique o motivo da transferência. Apresente o tempo estimado de espera se disponível.",
+        "transitions": [
+          {
+            "target": "identificacao_usuario",
+            "condition": "Atendimento transferido"
+          }
+        ]
+      },
+      "fallback": {
+        "name": "Estado de Fallback",
+        "description": "Reorienta pedidos fora do escopo",
+        "prompt": "Peça desculpas por não ter entendido a solicitação. Liste as opções de atendimento disponíveis. Reforce que não executa ações sem consentimento explícito. Ofereça encaminhamento para atendimento humano.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Cliente escolhe nova opção"
+          },
+          {
+            "target": "encaminhamento_humano",
+            "condition": "Cliente solicita atendimento humano"
+          }
+        ]
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "customer.identify",
+      "description": "Identificar e autenticar cliente",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cpf": { "type": "string" },
+          "customerId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "billing.generateSlip",
+      "description": "Gerar segunda via de fatura",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customerId": { "type": "string" },
+          "referenceMonth": { "type": "string" }
+        },
+        "required": ["customerId", "referenceMonth"]
+      }
+    },
+    {
+      "name": "complaint.register",
+      "description": "Registrar reclamação do cliente",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customerId": { "type": "string" },
+          "type": { "type": "string", "enum": ["servico", "cobranca", "atendimento"] },
+          "description": { "type": "string" }
+        },
+        "required": ["customerId", "type", "description"]
+      }
+    },
+    {
+      "name": "account.getBalance",
+      "description": "Consultar saldo e consumo",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customerId": { "type": "string" }
+        },
+        "required": ["customerId"]
+      }
+    },
+    {
+      "name": "plan.getOptions",
+      "description": "Listar opções de planos disponíveis",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customerId": { "type": "string" },
+          "includeAddons": { "type": "boolean" }
+        },
+        "required": ["customerId"]
+      }
+    },
+    {
+      "name": "plan.change",
+      "description": "Alterar plano do cliente",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customerId": { "type": "string" },
+          "newPlanId": { "type": "string" },
+          "consent": { "type": "boolean" }
+        },
+        "required": ["customerId", "newPlanId", "consent"]
+      }
+    },
+    {
+      "name": "network.checkStatus",
+      "description": "Verificar status da rede na região",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "location": { "type": "string" },
+          "serviceType": { "type": "string", "enum": ["internet", "tv", "telefone", "movel"] }
+        },
+        "required": ["location"]
+      }
+    },
+    {
+      "name": "equipment.reset",
+      "description": "Executar reset remoto do equipamento",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customerId": { "type": "string" },
+          "equipmentId": { "type": "string" },
+          "consent": { "type": "boolean" }
+        },
+        "required": ["customerId", "consent"]
+      }
+    },
+    {
+      "name": "line.toggleBlock",
+      "description": "Bloquear ou desbloquear linha",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customerId": { "type": "string" },
+          "lineId": { "type": "string" },
+          "action": { "type": "string", "enum": ["block", "unblock"] },
+          "consent": { "type": "boolean" }
+        },
+        "required": ["customerId", "action", "consent"]
+      }
+    },
+    {
+      "name": "customer.updateData",
+      "description": "Atualizar dados cadastrais",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customerId": { "type": "string" },
+          "field": { "type": "string" },
+          "newValue": { "type": "string" }
+        },
+        "required": ["customerId", "field", "newValue"]
+      }
+    },
+    {
+      "name": "ticket.create",
+      "description": "Criar ticket para atendimento humano",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customerId": { "type": "string" },
+          "reason": { "type": "string" },
+          "priority": { "type": "string", "enum": ["low", "medium", "high"] }
+        },
+        "required": ["customerId", "reason"]
+      }
+    }
+  ],
+  "memory": {
+    "session": {
+      "ttl": 1800,
+      "fields": ["customerId", "currentIntent", "consentGiven", "lastAction"]
+    },
+    "longTerm": {
+      "enabled": true,
+      "collections": ["interaction_history", "complaint_history"]
+    }
+  },
+  "evals": [
+    {
+      "name": "consent_compliance",
+      "description": "Verifica se consentimento é obtido antes de ações",
+      "type": "llm-judge",
+      "criteria": "O agente deve sempre obter consentimento explícito antes de realizar alterações em planos, bloqueios ou resets"
+    },
+    {
+      "name": "information_accuracy",
+      "description": "Verifica precisão das informações fornecidas",
+      "type": "llm-judge",
+      "criteria": "As informações sobre saldo, consumo, planos e faturas devem ser precisas e atualizadas"
+    },
+    {
+      "name": "routing_accuracy",
+      "description": "Verifica se o roteamento está correto",
+      "type": "llm-judge",
+      "criteria": "O agente deve direcionar corretamente o cliente para o fluxo adequado à sua necessidade"
+    }
+  ],
+  "deployments": {
+    "environments": {
+      "development": {
+        "provider": "anthropic",
+        "model": "claude-3-haiku-20240307",
+        "maxTokens": 1024
+      },
+      "production": {
+        "provider": "anthropic",
+        "model": "claude-3-sonnet-20240229",
+        "maxTokens": 2048,
+        "approvalRequired": true
+      }
+    },
+    "currentEnvironment": "development"
+  }
+}

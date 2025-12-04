@@ -1,0 +1,49 @@
+{
+  "$schema": "https://ialab.dev/schemas/agent-manifest-v1.json",
+  "manifest_version": "1.0",
+  "metadata": {
+    "id": "00000000-0000-0000-0000-000000000a07",
+    "name": "TelcoAssist",
+    "slug": "telcoassist",
+    "domain": "telecom",
+    "tags": ["telecom", "customer-support", "fsm"],
+    "owner": "public-catalog",
+    "risk_level": "medium",
+    "data_classification": "internal"
+  },
+  "prd": {
+    "purpose": "Atendimento automatizado para clientes de telecom (2ª via, saldo, alteração de plano, suporte técnico).",
+    "scope": "Cobrir solicitações comuns; não realizar mudanças sem consentimento explícito nem suporte físico avançado.",
+    "context_problem": "Alta demanda de suporte e tempo de espera elevam custos e insatisfação.",
+    "expected_impacts": [
+      "Reduzir chamadas de suporte humano em 50%",
+      "Aumentar velocidade de resolução",
+      "Liberar equipe para casos complexos"
+    ],
+    "solution_overview": "Agente que roteia intenções principais e executa fluxos guiados com validação de consentimento.",
+    "requirements": [
+      {"id": "RF1", "title": "Fatura", "description": "Gerar ou instruir emissão de 2ª via"},
+      {"id": "RF2", "title": "Plano", "description": "Alterar plano ou adicionar pacotes com consentimento"},
+      {"id": "RF3", "title": "Suporte", "description": "Resolver problemas de conexão e reset de modem"}
+    ]
+  },
+  "fsm": {
+    "initial_state": "identificacao-inicial-do-usuario",
+    "fallback_state": "fallback",
+    "states": [
+      {"id": "identificacao-inicial-do-usuario", "name": "Identificação Inicial do Usuário (RF 2)", "description": "Identifica e autentica cliente.", "prompt_blocks": [{"role": "system", "content": "Peça CPF/identificador e valide consentimento para acessar dados."}], "transitions": []},
+      {"id": "inicio-sessao-roteamento", "name": "Estado de Início da Sessão e Roteamento (RF 3)", "description": "Classifica intenção (fatura, reclamação, saldo, plano, conexão).", "prompt_blocks": [{"role": "system", "content": "Mapeie intenção e confirme antes de executar ação."}], "transitions": []},
+      {"id": "solicitacao-2a-via", "name": "Solicitação de 2ª Via de Fatura (RF 4)", "description": "Gera instruções/link para 2ª via.", "prompt_blocks": [{"role": "system", "content": "Valide identidade e mês da fatura antes de gerar link."}], "transitions": []},
+      {"id": "reclamacoes", "name": "Reclamações sobre Serviço ou Cobrança (RF 5)", "description": "Registra reclamações e próximos passos.", "prompt_blocks": [{"role": "system", "content": "Colete detalhes e ofereça protocolo de atendimento."}], "transitions": []},
+      {"id": "consulta-saldo", "name": "Consulta de Saldo ou Consumo de Dados (RF 6)", "description": "Retorna saldo/consumo com data/hora.", "prompt_blocks": [{"role": "system", "content": "Mostre consumo atual e franquia."}], "transitions": []},
+      {"id": "alteracao-plano", "name": "Alteração de Plano ou Adição de Pacotes (RF 7)", "description": "Propõe upgrade/add-on com consentimento.", "prompt_blocks": [{"role": "system", "content": "Explique condições e peça confirmação explícita."}], "transitions": []},
+      {"id": "problemas-conexao", "name": "Relato de Problemas de Conexão ou Sinal (RF 8)", "description": "Triagem de conexão e sinal.", "prompt_blocks": [{"role": "system", "content": "Colete localização e sintomas antes de acionar reset."}], "transitions": []},
+      {"id": "suporte-tecnico", "name": "Suporte para Resolução de Problemas Técnicos (RF 9)", "description": "Passo a passo para problemas comuns.", "prompt_blocks": [{"role": "system", "content": "Forneça instruções simples; escale se falhar."}], "transitions": []},
+      {"id": "reset-modem", "name": "Reset de Modem/Roteador (RF 10)", "description": "Conduz reset seguro.", "prompt_blocks": [{"role": "system", "content": "Peça confirmação antes de resetar e valide sucesso."}], "transitions": []},
+      {"id": "bloqueio-linha", "name": "Bloqueio/Desbloqueio de Linha (RF 11)", "description": "Bloqueia/desbloqueia com registro de consentimento.", "prompt_blocks": [{"role": "system", "content": "Reforce consentimento e riscos."}], "transitions": []},
+      {"id": "atualizacao-dados", "name": "Atualização de Dados Cadastrais (RF 12)", "description": "Atualiza dados básicos do cliente.", "prompt_blocks": [{"role": "system", "content": "Peça dados obrigatórios e confirme."}], "transitions": []},
+      {"id": "encaminhamento-humano", "name": "Encaminhamento para Atendimento Humano (RF 13)", "description": "Escalação para humano.", "prompt_blocks": [{"role": "system", "content": "Forneça protocolo e explique o motivo da transferência."}], "transitions": []},
+      {"id": "fallback", "name": "Mapa de Estados (Fallback) (RF 14)", "description": "Reorienta pedidos fora de escopo.", "prompt_blocks": [{"role": "system", "content": "Liste opções suportadas e não execute ações sem consentimento."}], "transitions": []}
+    ]
+  }
+}

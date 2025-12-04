@@ -1,0 +1,255 @@
+{
+  "$schema": "../packages/ia-lab-agentkit/schemas/manifest.json",
+  "metadata": {
+    "id": "agente-agendamento",
+    "name": "Agente de Agendamento",
+    "version": "1.0.0",
+    "description": "Agente de IA para facilitar agendamento, cancelamento e reagendamento de consultas médicas",
+    "author": "PrototipeAI",
+    "tags": ["healthcare", "scheduling", "appointments"],
+    "category": "Healthcare",
+    "sourceUrl": "https://www.prototipeai.com/posts/agente-para-agendamento-consultas"
+  },
+  "prd": {
+    "purpose": "Facilitar agendamento, cancelamento e reagendamento de consultas médicas de forma automatizada.",
+    "scope": "Define todos os prompts, configurações de memória, transição entre estados e requisitos funcionais para um agente de IA de agendamento de consultas médicas.",
+    "currentState": "Recepções de clínicas e hospitais frequentemente ficam sobrecarregadas com consultas de agendamento manual, limitando a disponibilidade e gerando atrasos no atendimento.",
+    "problems": [
+      "Recepções sobrecarregadas com consultas de agendamento",
+      "Disponibilidade limitada para agendamento manual",
+      "Dificuldade em cancelar ou reagendar consultas"
+    ],
+    "expectedImpact": [
+      "Reduzir chamadas para recepção em 50%",
+      "Otimizar processo de agendamento",
+      "Aumentar satisfação do paciente"
+    ],
+    "outOfScope": [
+      "Não fornece diagnósticos médicos",
+      "Não realiza consultas médicas",
+      "Não processa pagamentos"
+    ],
+    "targetAudience": "Pacientes que desejam agendar, cancelar ou reagendar consultas médicas",
+    "successMetrics": [
+      "Taxa de agendamentos automatizados",
+      "Redução de chamadas na recepção",
+      "Tempo médio de agendamento"
+    ],
+    "persona": {
+      "tone": "Cordial e eficiente",
+      "personality": "Organizado e prestativo, focado em resolver rapidamente as necessidades de agendamento",
+      "language": "pt-BR"
+    }
+  },
+  "fsm": {
+    "initial": "identificacao_usuario",
+    "states": {
+      "identificacao_usuario": {
+        "name": "Identificação Inicial do Usuário",
+        "description": "Cumprimenta e identifica o paciente no sistema",
+        "prompt": "Você é o Assistente de Agendamento. Cumprimente o paciente cordialmente e solicite seus dados para identificação: nome completo, CPF e telefone para contato.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Paciente identificado com sucesso"
+          }
+        ]
+      },
+      "inicio_sessao": {
+        "name": "Início da Sessão e Roteamento",
+        "description": "Define se o fluxo é agendar, cancelar ou reagendar",
+        "prompt": "Pergunte ao paciente qual ação deseja realizar: agendar uma nova consulta, cancelar uma consulta existente ou reagendar uma consulta. Confirme a intenção antes de prosseguir.",
+        "transitions": [
+          {
+            "target": "agendamento_consultas",
+            "condition": "Paciente deseja agendar nova consulta"
+          },
+          {
+            "target": "cancelamento_consultas",
+            "condition": "Paciente deseja cancelar consulta"
+          },
+          {
+            "target": "reagendamento_consultas",
+            "condition": "Paciente deseja reagendar consulta"
+          },
+          {
+            "target": "fallback",
+            "condition": "Intenção não identificada"
+          }
+        ]
+      },
+      "agendamento_consultas": {
+        "name": "Agendamento de Consultas",
+        "description": "Consulta disponibilidade e efetiva o agendamento",
+        "prompt": "Colete as preferências do paciente: especialidade médica, profissional de preferência (se houver), data e horário desejados, e tipo de atendimento (presencial ou telemedicina). Consulte a disponibilidade e confirme o agendamento.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Agendamento confirmado, verificar outras necessidades"
+          },
+          {
+            "target": "fallback",
+            "condition": "Sem disponibilidade para os critérios informados"
+          }
+        ]
+      },
+      "cancelamento_consultas": {
+        "name": "Cancelamento de Consultas",
+        "description": "Cancela uma consulta existente",
+        "prompt": "Solicite o número do protocolo ou dados da consulta a ser cancelada. Valide as informações e confirme o cancelamento com o paciente antes de efetivar.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Cancelamento confirmado"
+          }
+        ]
+      },
+      "reagendamento_consultas": {
+        "name": "Reagendamento de Consultas",
+        "description": "Move uma consulta para um novo horário",
+        "prompt": "Solicite os dados da consulta atual e as novas preferências de data e horário. Verifique a disponibilidade e combine com o paciente antes de confirmar o reagendamento.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Reagendamento confirmado"
+          },
+          {
+            "target": "fallback",
+            "condition": "Sem disponibilidade para novo horário"
+          }
+        ]
+      },
+      "fallback": {
+        "name": "Estado de Fallback",
+        "description": "Reorienta quando fora de escopo ou dados insuficientes",
+        "prompt": "Peça desculpas pela limitação e liste as ações disponíveis: agendar consulta, cancelar consulta ou reagendar consulta. Pergunte como pode ajudar.",
+        "transitions": [
+          {
+            "target": "inicio_sessao",
+            "condition": "Sempre"
+          }
+        ]
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "patient.verify",
+      "description": "Verificar e autenticar dados do paciente",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cpf": { "type": "string" },
+          "name": { "type": "string" },
+          "phone": { "type": "string" }
+        },
+        "required": ["cpf"]
+      }
+    },
+    {
+      "name": "schedule.checkAvailability",
+      "description": "Consultar disponibilidade de horários",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "specialty": { "type": "string" },
+          "professionalId": { "type": "string" },
+          "date": { "type": "string" },
+          "modality": { "type": "string", "enum": ["presencial", "telemedicina"] }
+        },
+        "required": ["specialty"]
+      }
+    },
+    {
+      "name": "schedule.book",
+      "description": "Efetivar agendamento de consulta",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "patientId": { "type": "string" },
+          "professionalId": { "type": "string" },
+          "slotId": { "type": "string" },
+          "modality": { "type": "string" }
+        },
+        "required": ["patientId", "professionalId", "slotId"]
+      }
+    },
+    {
+      "name": "schedule.cancel",
+      "description": "Cancelar consulta existente",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "appointmentId": { "type": "string" },
+          "reason": { "type": "string" }
+        },
+        "required": ["appointmentId"]
+      }
+    },
+    {
+      "name": "schedule.reschedule",
+      "description": "Reagendar consulta para novo horário",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "appointmentId": { "type": "string" },
+          "newSlotId": { "type": "string" }
+        },
+        "required": ["appointmentId", "newSlotId"]
+      }
+    },
+    {
+      "name": "notification.sendConfirmation",
+      "description": "Enviar confirmação por SMS ou email",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "patientId": { "type": "string" },
+          "appointmentId": { "type": "string" },
+          "channel": { "type": "string", "enum": ["sms", "email", "whatsapp"] }
+        },
+        "required": ["patientId", "appointmentId"]
+      }
+    }
+  ],
+  "memory": {
+    "session": {
+      "ttl": 1800,
+      "fields": ["patientId", "currentAction", "selectedSlot", "appointmentId"]
+    },
+    "longTerm": {
+      "enabled": true,
+      "collections": ["appointment_history"]
+    }
+  },
+  "evals": [
+    {
+      "name": "scheduling_accuracy",
+      "description": "Verifica se os agendamentos são corretos",
+      "type": "llm-judge",
+      "criteria": "O agendamento deve corresponder às preferências do paciente e à disponibilidade real"
+    },
+    {
+      "name": "scope_compliance",
+      "description": "Verifica se o agente se mantém no escopo",
+      "type": "llm-judge",
+      "criteria": "O agente não deve fornecer diagnósticos médicos ou processar pagamentos"
+    }
+  ],
+  "deployments": {
+    "environments": {
+      "development": {
+        "provider": "anthropic",
+        "model": "claude-3-haiku-20240307",
+        "maxTokens": 1024
+      },
+      "production": {
+        "provider": "anthropic",
+        "model": "claude-3-sonnet-20240229",
+        "maxTokens": 2048,
+        "approvalRequired": true
+      }
+    },
+    "currentEnvironment": "development"
+  }
+}

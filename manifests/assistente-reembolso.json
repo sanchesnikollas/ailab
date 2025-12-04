@@ -1,0 +1,202 @@
+{
+  "$schema": "../packages/ia-lab-agentkit/schemas/manifest.json",
+  "metadata": {
+    "id": "assistente-reembolso",
+    "name": "Assistente de Reembolso",
+    "version": "1.0.0",
+    "description": "Agente de IA conversacional para esclarecer dúvidas sobre o processo de reembolso em planos de saúde",
+    "author": "PrototipeAI",
+    "tags": ["healthcare", "insurance", "reimbursement", "customer-service"],
+    "category": "Healthcare",
+    "sourceUrl": "https://www.prototipeai.com/posts/agente-de-ia-para-duvidas-de-reembolso-plano-saude"
+  },
+  "prd": {
+    "purpose": "Fornecer respostas claras e precisas sobre documentos necessários, prazos, cobertura e status de solicitações de reembolso, melhorando a experiência do cliente e reduzindo a carga sobre a equipe de atendimento.",
+    "scope": "Define todos os prompts, configurações de memória, transição entre estados e requisitos funcionais para um Agente de IA conversacional projetado para esclarecer dúvidas sobre o processo de reembolso em planos de saúde.",
+    "currentState": "Clientes de planos de saúde frequentemente têm dúvidas sobre o processo de reembolso, gerando um alto volume de consultas ao atendimento. A falta de clareza sobre os procedimentos pode levar a erros no envio de documentos e atrasos no processamento.",
+    "problems": [
+      "Alto Volume de Dúvidas sobre reembolso",
+      "Informações Inconsistentes fornecidas aos clientes",
+      "Atrasos no Processamento devido a erros de documentação"
+    ],
+    "expectedImpact": [
+      "Reduzir as consultas sobre reembolso no atendimento humano em até 60%",
+      "Aumentar a precisão no envio de documentos pelos clientes",
+      "Melhorar a satisfação do cliente com um serviço de autoatendimento eficiente e disponível 24/7"
+    ],
+    "outOfScope": [
+      "Não deve realizar a abertura de novas solicitações de reembolso",
+      "Não deve processar pagamentos ou transações financeiras"
+    ],
+    "targetAudience": "Clientes de planos de saúde com dúvidas sobre reembolso",
+    "successMetrics": [
+      "Redução de 60% nas consultas humanas sobre reembolso",
+      "Taxa de resolução no primeiro contato",
+      "Satisfação do cliente (NPS)"
+    ],
+    "persona": {
+      "tone": "Claro, objetivo e empático",
+      "personality": "Transmitindo confiança e segurança nas informações",
+      "language": "pt-BR"
+    }
+  },
+  "fsm": {
+    "initial": "roteamento_inicial",
+    "states": {
+      "roteamento_inicial": {
+        "name": "Estado de Roteamento Inicial",
+        "description": "Identificar a necessidade do cliente e direcioná-lo ao fluxo adequado",
+        "prompt": "Você é o Assistente de Reembolso, especialista em planos de saúde. Cumprimente o cliente e pergunte qual sua dúvida: documentação necessária, prazos, verificação de cobertura ou status de uma solicitação.",
+        "transitions": [
+          {
+            "target": "duvidas_documentacao",
+            "condition": "Cliente tem dúvidas sobre documentação"
+          },
+          {
+            "target": "duvidas_prazos",
+            "condition": "Cliente tem dúvidas sobre prazos"
+          },
+          {
+            "target": "verificacao_cobertura",
+            "condition": "Cliente quer verificar cobertura"
+          },
+          {
+            "target": "consulta_status",
+            "condition": "Cliente quer consultar status de reembolso"
+          }
+        ]
+      },
+      "duvidas_documentacao": {
+        "name": "Dúvidas sobre Documentação",
+        "description": "Esclarecer quais documentos são necessários para cada tipo de reembolso",
+        "prompt": "Explique detalhadamente os documentos necessários para o tipo de reembolso solicitado. Pergunte sobre o tipo de procedimento (consulta, exame, internação, etc.) e liste os documentos específicos necessários.",
+        "transitions": [
+          {
+            "target": "roteamento_inicial",
+            "condition": "Dúvida esclarecida, cliente pode ter outras dúvidas"
+          }
+        ]
+      },
+      "duvidas_prazos": {
+        "name": "Dúvidas sobre Prazos",
+        "description": "Informar sobre prazos de análise e pagamento",
+        "prompt": "Informe os prazos padrão para análise e pagamento de reembolso conforme o tipo de procedimento e forma de pagamento escolhida pelo cliente.",
+        "transitions": [
+          {
+            "target": "roteamento_inicial",
+            "condition": "Dúvida esclarecida, cliente pode ter outras dúvidas"
+          }
+        ]
+      },
+      "verificacao_cobertura": {
+        "name": "Verificação de Cobertura",
+        "description": "Verificar se procedimentos e especialidades têm cobertura para reembolso",
+        "prompt": "Solicite o tipo de procedimento ou especialidade e verifique na base de dados se há cobertura no plano do cliente. Informe limites, percentuais e condições aplicáveis.",
+        "transitions": [
+          {
+            "target": "roteamento_inicial",
+            "condition": "Verificação concluída"
+          }
+        ]
+      },
+      "consulta_status": {
+        "name": "Consulta de Status de Reembolso",
+        "description": "Verificar o status de uma solicitação de reembolso existente",
+        "prompt": "Solicite o número do protocolo ou dados do cliente para localizar a solicitação. Informe o status atual, previsão de conclusão e próximos passos se aplicável.",
+        "transitions": [
+          {
+            "target": "roteamento_inicial",
+            "condition": "Status informado, cliente pode ter outras dúvidas"
+          }
+        ]
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "customer.identify",
+      "description": "Identificar cliente pelo CPF ou número de carteirinha",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cpf": { "type": "string" },
+          "cardNumber": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "plan.getCoverage",
+      "description": "Verificar cobertura do plano para procedimentos",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customerId": { "type": "string" },
+          "procedureType": { "type": "string" }
+        },
+        "required": ["customerId", "procedureType"]
+      }
+    },
+    {
+      "name": "reimbursement.getStatus",
+      "description": "Consultar status de solicitação de reembolso",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "protocolNumber": { "type": "string" },
+          "customerId": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "documents.getRequired",
+      "description": "Obter lista de documentos necessários por tipo de procedimento",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "procedureType": { "type": "string" }
+        },
+        "required": ["procedureType"]
+      }
+    }
+  ],
+  "memory": {
+    "session": {
+      "ttl": 1800,
+      "fields": ["customerId", "planType", "currentQuery"]
+    },
+    "longTerm": {
+      "enabled": true,
+      "collections": ["query_history"]
+    }
+  },
+  "evals": [
+    {
+      "name": "information_accuracy",
+      "description": "Verifica se as informações fornecidas são precisas",
+      "type": "llm-judge",
+      "criteria": "As informações sobre documentos, prazos e cobertura devem ser precisas e atualizadas"
+    },
+    {
+      "name": "scope_compliance",
+      "description": "Verifica se o agente não abre solicitações ou processa pagamentos",
+      "type": "llm-judge",
+      "criteria": "O agente não deve tentar abrir solicitações de reembolso ou processar transações financeiras"
+    }
+  ],
+  "deployments": {
+    "environments": {
+      "development": {
+        "provider": "anthropic",
+        "model": "claude-3-haiku-20240307",
+        "maxTokens": 1024
+      },
+      "production": {
+        "provider": "anthropic",
+        "model": "claude-3-sonnet-20240229",
+        "maxTokens": 2048,
+        "approvalRequired": true
+      }
+    },
+    "currentEnvironment": "development"
+  }
+}
